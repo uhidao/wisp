@@ -9,6 +9,12 @@ pub fn tr(src: &'static str) -> &'static str {
 }
 
 
+/// 运行时查表：接受任意 `&str`（副标题等非 `&'static str` 场景），
+/// 命中返回译文，未命中返回 None。
+pub fn lookup(src: &str) -> Option<&'static str> {
+    ZH.iter().find(|(k, _)| *k == src).map(|(_, v)| *v)
+}
+
 pub const ZH: &[(&str, &str)] = &[
     ("System", "跟随系统"),
     ("Dark", "深色"),
@@ -307,6 +313,16 @@ pub const ZH: &[(&str, &str)] = &[
     ("Theme, shortcut, dock and more", "主题、快捷键、Dock 及更多"),
     ("Wisp config", "Wisp 配置"),
     ("Notepad", "记事本"),
+    "Tap the Windows key alone to open Wisp instead of Start.", "单独按 Windows 键打开 Wisp，而不是开始菜单。",
+    "While the taskbar is hidden, windows stop above the dock.", "任务栏隐藏时，窗口只到 Dock 上方为止。",
+    "Lists an app's windows when you hover its icon.", "鼠标悬停在图标上时列出该应用的窗口。",
+    "The taskbar comes back when Wisp quits.", "退出 Wisp 后任务栏恢复。",
+    "Nightly builds skip checks.", "每夜版跳过更新检查。",
+    "Daily, except on metered connections.", "每天检查一次，按流量计费的连接除外。",
+    "Acrylic and Mica blur what is behind the launcher and fade in. Solid appears at once.", "亚克力和云母会虚化启动器背后的内容并淡入，纯色则立即显示。",
+    "Shown when the search box is empty.", "搜索框为空时显示。",
+    "When Everything is running, search every drive with it.", "Everything 运行时，用它搜索所有磁盘。",
+    "Names that start with a dot are always skipped.", "以点开头的名称始终跳过。",
 ];
 
 

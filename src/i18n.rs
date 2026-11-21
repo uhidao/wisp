@@ -9,6 +9,12 @@ pub fn tr(src: &'static str) -> &'static str {
 }
 
 
+/// 运行时查表：接受任意 `&str`（副标题等非 `&'static str` 场景），
+/// 命中返回译文，未命中返回 None。
+pub fn lookup(src: &str) -> Option<&'static str> {
+    ZH.iter().find(|(k, _)| *k == src).map(|(_, v)| *v)
+}
+
 pub const ZH: &[(&str, &str)] = &[
     ("System", "跟随系统"),
     ("Dark", "深色"),

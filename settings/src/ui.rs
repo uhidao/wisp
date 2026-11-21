@@ -1680,7 +1680,11 @@ fn item(title: &'static str, description: impl Into<SharedString>, p: Palette) -
 
 /// The line under a setting's title, when it has one.
 fn described(description: impl Into<SharedString>, p: Palette) -> Option<Div> {
-    let description = description.into();
+    let description: SharedString = description.into();
+    let description: SharedString = match crate::i18n::lookup(&description) {
+        Some(translated) => translated.into(),
+        None => description,
+    };
     (!description.is_empty()).then(|| hint(description, p))
 }
 
