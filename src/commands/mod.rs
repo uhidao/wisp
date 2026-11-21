@@ -6,7 +6,6 @@
 //! from it; the worker posts a message when new state arrives.
 
 use crate::i18n::tr;
-use crate::i18n::tr_fmt;
 pub mod appearance;
 pub mod audio;
 pub mod battery;
@@ -425,7 +424,7 @@ fn radio_item(
                 let mut item = row(
                     format!("{name} · {word}"),
                     if detail.is_empty() {
-                        tr_fmt!("Tab for {}", drill.title().to_lowercase())
+                        crate::tr_fmt!("Tab for {}", drill.title().to_lowercase())
                     } else {
                         format!("{detail} · Tab for {}", drill.title().to_lowercase())
                     },
@@ -453,7 +452,7 @@ fn wifi_items(words: &[&str], state: Option<&Option<wifi::State>>) -> Vec<Result
     let state = state.map(|s| {
         s.as_ref().map(|s| {
             let detail = match &s.network {
-                Some(network) => tr_fmt!("Connected to {}", network),
+                Some(network) => crate::tr_fmt!("Connected to {}", network),
                 None if s.on => tr("Not connected").into(),
                 None => String::new(),
             };
@@ -486,7 +485,7 @@ fn bluetooth_items(words: &[&str], state: Option<&Option<bluetooth::State>>) -> 
             let detail = match s.connected.as_slice() {
                 _ if !s.on => String::new(),
                 [] => tr("No devices connected").into(),
-                [one] => tr_fmt!("Connected to {}", one),
+                [one] => crate::tr_fmt!("Connected to {}", one),
                 [first, rest @ ..] => format!("Connected to {first} and {} more", rest.len()),
             };
             (s.on, detail)
@@ -516,9 +515,9 @@ fn volume_items(words: &[&str], state: Option<&Option<audio::State>>) -> Vec<Res
         return Vec::new();
     };
     let now = if audio.muted {
-        tr_fmt!("Muted · {}", audio.device)
+        crate::tr_fmt!("Muted · {}", audio.device)
     } else {
-        tr_fmt!("Now {}% · {}", audio.volume, audio.device)
+        crate::tr_fmt!("Now {}% · {}", audio.volume, audio.device)
     };
     let set = |percent: u32| {
         let percent = percent.min(100);
@@ -553,7 +552,7 @@ fn volume_items(words: &[&str], state: Option<&Option<audio::State>>) -> Vec<Res
             let title = if audio.muted {
                 tr("Volume · Muted").to_string()
             } else {
-                tr_fmt!("Volume · {}%", audio.volume)
+                crate::tr_fmt!("Volume · {}%", audio.volume)
             };
             let mut item = row(
                 title,
@@ -704,7 +703,7 @@ fn quit_item(query: &str) -> Option<ResultItem> {
             .iter()
             .any(|verb| verb.starts_with(query) || format!("{verb} {name}").starts_with(query));
     matches.then(|| {
-        let title = tr_fmt!("Quit {}", crate::channel::NAME);
+        let title = crate::tr_fmt!("Quit {}", crate::channel::NAME);
         row(
             &title,
             "Closes the launcher and restores the taskbar",

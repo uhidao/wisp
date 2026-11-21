@@ -10,7 +10,6 @@
 //! in `%APPDATA%\wisp\surfaces`.
 
 use crate::i18n::tr;
-use crate::i18n::tr_fmt;
 pub mod nav;
 pub mod radios;
 
@@ -326,7 +325,7 @@ impl Library {
                 let subtitle = if spec.description.is_empty() {
                     tr("Wisp panel").to_string()
                 } else {
-                    tr_fmt!("Wisp panel · {}", spec.description)
+                    crate::tr_fmt!("Wisp panel · {}", spec.description)
                 };
                 ResultItem::new(Kind::Command, spec.title.clone(), subtitle, Action::Surface(index))
                     .glyph(GLYPH)

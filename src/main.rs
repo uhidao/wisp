@@ -13,7 +13,6 @@ mod ease;
 mod editor;
 mod files;
 mod history;
-#[macro_use]
 mod i18n;
 mod hotkey;
 mod indexer;

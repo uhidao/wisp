@@ -1,6 +1,5 @@
 //! The status matrix and clock at the right end of the dock.
 use crate::i18n::tr;
-use crate::i18n::tr_fmt;
 
 use super::logic::{STATUS_ITEMS, StatusItem, StatusPlacement};
 
@@ -183,7 +182,7 @@ impl Status {
     pub fn tooltip_for(&self, radios: &Radios, items: &[StatusItem]) -> String {
         let volume = match self.volume {
             Some(v) if v.muted => "Muted".into(),
-            Some(v) => tr_fmt!("Volume {}%", v.percent),
+            Some(v) => crate::tr_fmt!("Volume {}%", v.percent),
             None => tr("No audio device").into(),
         };
         let battery = match self.battery {
@@ -203,8 +202,8 @@ impl Status {
         let bluetooth = match &radios.bluetooth {
             Some(b) if !b.on => tr("Bluetooth off").into(),
             Some(b) => match b.connected.first() {
-                Some(name) if b.connected.len() > 1 => tr_fmt!("Bluetooth: {} (+{})", b.connected.len() - 1),
-                Some(name) => tr_fmt!("Bluetooth: {}"),
+                Some(name) if b.connected.len() > 1 => crate::tr_fmt!("Bluetooth: {} (+{})", b.connected.len() - 1),
+                Some(name) => crate::tr_fmt!("Bluetooth: {}"),
                 None => tr("Bluetooth on").into(),
             },
             None if !radios.read => tr("Bluetooth: checking").into(),

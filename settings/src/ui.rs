@@ -2,7 +2,6 @@
 //! onboarding instead.
 
 use crate::i18n::tr;
-use crate::i18n::tr_fmt;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -836,7 +835,7 @@ impl Settings {
             Updates::Available(release) => {
                 let page = release.page.clone();
                 (
-                    tr_fmt!("Wisp {} is available.", release.version()).into(),
+                    crate::tr_fmt!("Wisp {} is available.", release.version()).into(),
                     h_flex()
                         .gap_2()
                         .child(
@@ -856,7 +855,7 @@ impl Settings {
             }
             Updates::Installing => (tr("Wisp restarts when it is done.").into(), busy(tr("Updating…"))),
             Updates::Installed(version) => (
-                tr_fmt!("Wisp {} is installed.", version).into(),
+                crate::tr_fmt!("Wisp {} is installed.", version).into(),
                 Button::new("restart-settings")
                     .primary()
                     .label(tr("Restart Settings"))
@@ -1297,7 +1296,7 @@ impl Settings {
                             .small()
                             .ghost()
                             .label(tr("Remove"))
-                            .accessibility_label(tr_fmt!("Remove {}", name))
+                            .accessibility_label(crate::tr_fmt!("Remove {}", name))
                             .on_click(cx.listener(move |this, _, window, cx| {
                                 let mut folders = this.config.file_search_exclude.clone();
                                 if index < folders.len() {
