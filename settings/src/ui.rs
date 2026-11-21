@@ -2,6 +2,7 @@
 //! onboarding instead.
 
 use crate::i18n::tr;
+use crate::i18n::tr_fmt;
 use std::sync::Arc;
 use std::time::Duration;
 

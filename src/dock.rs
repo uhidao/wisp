@@ -51,7 +51,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 use windows::Win32::UI::Input::{RAWINPUTDEVICE, RIDEV_INPUTSINK, RIDEV_REMOVE, RegisterRawInputDevices};
 use windows::Win32::UI::Shell::PropertiesSystem::{IPropertyStore, SHGetPropertyStoreForWindow};
 use windows::Win32::UI::WindowsAndMessaging::*;
-use windows::core::{Error, GUID, HSTRING, Result, w};
+use windows::core::{Error, GUID, HSTRING, Result, w, PCWSTR};
 
 use crate::commands::open_windows::{self, Window};
 use crate::config::{Backdrop, WindowListMode};

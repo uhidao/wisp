@@ -10,6 +10,7 @@
 //! in `%APPDATA%\wisp\surfaces`.
 
 use crate::i18n::tr;
+use crate::i18n::tr_fmt;
 pub mod nav;
 pub mod radios;
 

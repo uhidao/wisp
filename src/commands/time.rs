@@ -16,7 +16,7 @@ use windows::Win32::{
         Time::{DYNAMIC_TIME_ZONE_INFORMATION, EnumDynamicTimeZoneInformation, SystemTimeToTzSpecificLocalTimeEx},
     },
 };
-use windows::core::{HSTRING, PCWSTR, w};
+use windows::core::{HSTRING, PCWSTR};
 
 const WEEKDAYS: [&str; 7] = [
     "Sunday",

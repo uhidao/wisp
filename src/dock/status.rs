@@ -1,5 +1,6 @@
 //! The status matrix and clock at the right end of the dock.
 use crate::i18n::tr;
+use crate::i18n::tr_fmt;
 
 use super::logic::{STATUS_ITEMS, StatusItem, StatusPlacement};
 

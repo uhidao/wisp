@@ -6,6 +6,7 @@
 //! from it; the worker posts a message when new state arrives.
 
 use crate::i18n::tr;
+use crate::i18n::tr_fmt;
 pub mod appearance;
 pub mod audio;
 pub mod battery;
