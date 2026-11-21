@@ -175,6 +175,7 @@ pub fn scroll_to(rect: &Rect, scroll: f32, view_h: f32) -> f32 {
 
 #[cfg(test)]
 mod tests {
+    use crate::i18n::tr;
     use super::*;
     use crate::surface::Target;
 
@@ -239,7 +240,7 @@ mod tests {
             w: 300.0,
             h: 0.0,
         };
-        let chips = chip_rects(&rect, &["Speakers", "Headphones (Bluetooth)", "Monitor"]);
+        let chips = chip_rects(&rect, &[tr("Speakers"), tr("Headphones (Bluetooth)"), "Monitor"]);
         assert_eq!(chips[0].y, 42.0);
         assert!(chips[1].y > chips[0].y || chips[2].y > chips[0].y);
         assert!(chips.iter().all(|c| c.x + c.w <= 288.0));

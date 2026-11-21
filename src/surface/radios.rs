@@ -1,4 +1,5 @@
 //! Open-view radio state, pure selection/password logic, and a bounded worker.
+use crate::i18n::tr;
 use super::{Input, Widget};
 use crate::{
     commands::{Command, bluetooth, bluetooth_audio, glyph, wifi},
@@ -203,7 +204,7 @@ impl Panel {
                             } else {
                                 RadioKind::Bluetooth
                             },
-                            if wifi_view { "Wi-Fi" } else { "Bluetooth" },
+                            if wifi_view { tr("Wi-Fi") } else { tr("Bluetooth") },
                             on,
                             access,
                         )
@@ -319,18 +320,18 @@ impl Panel {
     }
     pub fn widgets(&self, filter: &str) -> Vec<Widget> {
         let wifi_view = self.wifi == Some(true);
-        let title = if wifi_view { "Wi-Fi" } else { "Bluetooth" };
+        let title = if wifi_view { tr("Wi-Fi") } else { tr("Bluetooth") };
         let glyph = if wifi_view { glyph::WIFI } else { glyph::BLUETOOTH };
         let mut widgets = vec![Widget::new(
             title,
             if self.power.is_some() {
                 "Changing\u{2026}"
             } else if !self.read {
-                "Checking…"
+                tr("Checking…")
             } else if self.on {
                 "On"
             } else {
-                "Off"
+                tr("Off")
             },
             glyph,
             Input::Toggle {
@@ -356,13 +357,13 @@ impl Panel {
                         Phase::Password(id) if id == &n.name => String::new(),
                         Phase::Pending(id) if id == &n.name => {
                             if n.connected {
-                                "Disconnecting…".into()
+                                tr("Disconnecting…").into()
                             } else {
-                                "Connecting…".into()
+                                tr("Connecting…").into()
                             }
                         }
-                        Phase::Failed(id, _) if id == &n.name => "Failed · Select to try again".into(),
-                        _ if n.connected => "Connected".into(),
+                        Phase::Failed(id, _) if id == &n.name => tr("Failed · Select to try again").into(),
+                        _ if n.connected => tr("Connected").into(),
                         _ if n.profile.is_some() => "Saved".into(),
                         _ => String::new(),
                     };
@@ -381,8 +382,8 @@ impl Panel {
                     ));
                 } else if networks.list.is_empty() {
                     widgets.push(row(
-                        "No networks found",
-                        "Try again in a moment".into(),
+                        tr("No networks found"),
+                        tr("Try again in a moment").into(),
                         glyph,
                         Command::RadioSelect("refresh".into()),
                     ));
@@ -393,9 +394,9 @@ impl Panel {
                 let state = match &self.phase {
                     Phase::Pending(id) if id == &d.id => {
                         if d.connected {
-                            "Disconnecting…"
+                            tr("Disconnecting…")
                         } else {
-                            "Connecting…"
+                            tr("Connecting…")
                         }
                     }
                     Phase::Failed(id, _) if id == &d.id => "Failed · Use Bluetooth settings",
@@ -403,11 +404,11 @@ impl Panel {
                         if d.connected {
                             "Connected · Opens Bluetooth settings"
                         } else {
-                            "Connect in Bluetooth settings"
+                            tr("Connect in Bluetooth settings")
                         }
                     }
-                    _ if d.connected => "Connected",
-                    _ => "Paired",
+                    _ if d.connected => tr("Connected"),
+                    _ => tr("Paired"),
                 };
                 let battery = d.battery.map(|b| format!(" · {b}%")).unwrap_or_default();
                 widgets.push(row(
@@ -423,8 +424,8 @@ impl Panel {
             }
             if self.devices.is_empty() && !self.busy() {
                 widgets.push(Widget::new(
-                    "No paired devices",
-                    "Add a device below",
+                    tr("No paired devices"),
+                    tr("Add a device below"),
                     glyph,
                     Input::Info { value: String::new() },
                 ));
@@ -432,7 +433,7 @@ impl Panel {
         }
         if let Some(error) = &self.error {
             widgets.push(link(
-                "Open settings",
+                tr("Open settings"),
                 error,
                 if wifi_view {
                     "ms-settings:network-wifi"
@@ -442,7 +443,7 @@ impl Panel {
             ));
         }
         if !wifi_view {
-            widgets.push(link("Add device", "", "ms-settings:bluetooth"));
+            widgets.push(link(tr("Add device"), "", "ms-settings:bluetooth"));
         }
         for (i, widget) in widgets.iter_mut().enumerate() {
             widget.wide = true;
@@ -552,9 +553,9 @@ mod tests {
         let mut panel = Panel::default();
         panel.on = true;
         panel.power = Some(true);
-        deliver(&mut panel, false, Err("Denied".into()));
+        deliver(&mut panel, false, Err(tr("Denied").into()));
         assert!(matches!(panel.widgets("")[0].input, Input::Toggle { on: false, .. }));
-        assert!(panel.widgets("").iter().any(|w| w.detail == "Denied"));
+        assert!(panel.widgets("").iter().any(|w| w.detail == tr("Denied")));
         panel.phase = Phase::Password("Home".into());
         panel.password = vec![65];
         deliver(&mut panel, false, Ok(()));
@@ -592,7 +593,7 @@ mod tests {
         assert_eq!(phase, Phase::Idle);
         phase.select(&network());
         assert_eq!(phase.submit(true), Some("Home".into()));
-        phase.finish(Some("Wrong password"));
+        phase.finish(Some(tr("Wrong password")));
         assert!(matches!(phase, Phase::Failed(_, _)));
         let mut saved = network();
         saved.profile = Some("Home".into());

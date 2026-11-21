@@ -1,5 +1,6 @@
 //! Launcher lifecycle, input and message loop.
 
+use crate::i18n::tr;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -304,13 +305,13 @@ pub fn run() -> Result<()> {
             }
             capture::start(l);
             if let Some(error) = config_error {
-                tray::notify(l.hwnd, "Wisp config", &error, true);
+                tray::notify(l.hwnd, tr("Wisp config"), &error, true);
             }
             if flag("--show") {
                 l.show();
             } else if first_run && let Err(error) = launch::settings(true) {
                 // Onboarding is optional. Without the settings app, Wisp starts as usual.
-                tray::notify(l.hwnd, "Could not open Settings", &error.message(), true);
+                tray::notify(l.hwnd, tr("Could not open Settings"), &error.message(), true);
             }
         });
 
@@ -546,7 +547,7 @@ impl Launcher {
             Ok(hotkey) => hotkey,
             Err(error) => {
                 if report_errors {
-                    tray::notify(self.hwnd, "Wisp config", &error, true);
+                    tray::notify(self.hwnd, tr("Wisp config"), &error, true);
                 }
                 return;
             }
@@ -574,7 +575,7 @@ impl Launcher {
                     "Windows could not register {}. Another app may use it. Change \"hotkey\" in the config.",
                     self.config.hotkey
                 );
-                tray::notify(hwnd, "Could not register shortcut", &message, true);
+                tray::notify(hwnd, tr("Could not register shortcut"), &message, true);
             }
         }
         tray::set_tip(hwnd, &self.tooltip());
@@ -586,7 +587,7 @@ impl Launcher {
         } else if self.win_key_hook.is_none() && !capture::active() {
             match crate::win_key::Hook::install(self.hwnd, WM_HOTKEY) {
                 Ok(hook) => self.win_key_hook = Some(hook),
-                Err(error) => tray::notify(self.hwnd, "Could not enable Win key", &error.to_string(), true),
+                Err(error) => tray::notify(self.hwnd, tr("Could not enable Win key"), &error.to_string(), true),
             }
             tray::set_tip(self.hwnd, &self.tooltip());
         }
@@ -611,13 +612,13 @@ impl Launcher {
             Ok(loaded) => loaded,
             Err(error) => {
                 // Keep the last valid config so a read or parse error does not change it.
-                tray::notify(self.hwnd, "Wisp config", &error, true);
+                tray::notify(self.hwnd, tr("Wisp config"), &error, true);
                 return;
             }
         };
         // One value that cannot be used falls back to its default; the rest applies.
         if let Some(warning) = warning {
-            tray::notify(self.hwnd, "Wisp config", &warning, true);
+            tray::notify(self.hwnd, tr("Wisp config"), &warning, true);
         }
         let file_search_changed = config.file_search != self.config.file_search
             || config.file_search_everything != self.config.file_search_everything
@@ -657,7 +658,7 @@ impl Launcher {
             } {
                 Ok(dock) => self.dock = Some(dock),
                 Err(e) => {
-                    tray::notify(self.hwnd, "Could not show the dock", &e.message(), true);
+                    tray::notify(self.hwnd, tr("Could not show the dock"), &e.message(), true);
                     return;
                 }
             }
@@ -818,7 +819,7 @@ impl Launcher {
                 SetTimer(Some(self.hwnd), TASKBAR_TIMER, TASKBAR_RETRY_MS, None);
             }
         } else if self.taskbar_failures == TASKBAR_ATTEMPTS {
-            tray::notify(self.hwnd, "Could not change the taskbar", &error.message(), true);
+            tray::notify(self.hwnd, tr("Could not change the taskbar"), &error.message(), true);
         }
     }
 
@@ -1372,18 +1373,18 @@ impl Launcher {
                     Action::Update,
                 )
                 .glyph("\u{E777}")
-                .verb("Update"),
+                .verb(tr("Update")),
             );
             self.base_results.insert(
                 1,
                 ResultItem::new(
                     Kind::Command,
                     format!("What's new in Wisp {version}"),
-                    "Open the release notes",
+                    tr("Open the release notes"),
                     Action::Open(release_notes(version)),
                 )
                 .glyph("\u{E946}")
-                .verb("Open"),
+                .verb(tr("Open")),
             );
         }
         if let Some(armed) = &self.armed {
@@ -1392,7 +1393,7 @@ impl Launcher {
                     && command == armed
                 {
                     item.title = format!("Press Enter again to {}", power.title().to_lowercase());
-                    item.subtitle = "Type anything to cancel".into();
+                    item.subtitle = tr("Type anything to cancel").into();
                 }
             }
         }
@@ -1569,7 +1570,7 @@ impl Launcher {
     fn run_command(&mut self, command: Command) {
         match &command {
             Command::RadioView(wifi) => {
-                let title = if *wifi { "Wi-Fi" } else { "Bluetooth" };
+                let title = if *wifi { tr("Wi-Fi") } else { tr("Bluetooth") };
                 if let Some(index) = self.surfaces.specs.iter().position(|s| s.title == title) {
                     self.open_surface(index);
                 }
@@ -1605,7 +1606,7 @@ impl Launcher {
             },
             Command::WispSettings => {
                 if let Err(error) = launch::settings(false) {
-                    tray::notify(self.hwnd, "Could not open Settings", &error.message(), true);
+                    tray::notify(self.hwnd, tr("Could not open Settings"), &error.message(), true);
                 }
                 self.hide();
                 return;
@@ -2014,7 +2015,7 @@ impl Launcher {
             anchor: util::utf16_offset(text, self.editor.anchor()),
             caret_visible: self.caret_visible,
             placeholder: if self.scope.is_some() || self.surface.is_some() {
-                "Filter"
+                tr("Filter")
             } else {
                 PLACEHOLDER
             },
@@ -2081,7 +2082,7 @@ impl Launcher {
             }
             tray::CMD_SETTINGS => {
                 if let Err(error) = launch::settings(false) {
-                    tray::notify(self.hwnd, "Could not open Settings", &error.message(), true);
+                    tray::notify(self.hwnd, tr("Could not open Settings"), &error.message(), true);
                 }
             }
             tray::CMD_CONFIG => {
@@ -2135,7 +2136,7 @@ impl Launcher {
                 _ => None,
             })
         });
-        let parent = radio.and_then(|_| self.surfaces.specs.iter().position(|s| s.title == "Now"));
+        let parent = radio.and_then(|_| self.surfaces.specs.iter().position(|s| s.title == tr("Now")));
         let query = self
             .surface
             .as_ref()
@@ -3068,9 +3069,9 @@ unsafe fn wndproc_inner(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) ->
         dock::WM_SHOW_NOW => {
             with_launcher(|l| {
                 l.load_surfaces();
-                if l.surfaces.specs.iter().any(|s| s.title == "Now") {
+                if l.surfaces.specs.iter().any(|s| s.title == tr("Now")) {
                     l.show();
-                    if let Some(index) = l.surfaces.specs.iter().position(|s| s.title == "Now") {
+                    if let Some(index) = l.surfaces.specs.iter().position(|s| s.title == tr("Now")) {
                         l.open_surface(index);
                     }
                 } else if let Err(error) = crate::launch::open("ms-actioncenter:") {

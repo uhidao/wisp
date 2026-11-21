@@ -1,4 +1,5 @@
 //! System tray icon, menu and notifications.
+use crate::i18n::tr;
 
 use windows::Win32::Foundation::{HWND, LPARAM, POINT, WPARAM};
 use windows::Win32::UI::Shell::*;
@@ -98,15 +99,15 @@ pub fn show_menu(hwnd: HWND, hotkey: &str, autostart: bool) -> u32 {
         item(MF_STRING, CMD_OPEN, &format!("Open {}\t{hotkey}", crate::channel::NAME));
         let _ = AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null());
         item(MF_STRING, CMD_RESCAN, "Rescan apps");
-        item(MF_STRING, CMD_SETTINGS, "Settings");
-        item(MF_STRING, CMD_CONFIG, "Edit config file");
+        item(MF_STRING, CMD_SETTINGS, tr("Settings"));
+        item(MF_STRING, CMD_CONFIG, tr("Edit config file"));
         item(
             if autostart { MF_STRING | MF_CHECKED } else { MF_STRING },
             CMD_AUTOSTART,
-            "Start with Windows",
+            tr("Start with Windows"),
         );
         let _ = AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null());
-        item(MF_STRING, CMD_QUIT, "Quit");
+        item(MF_STRING, CMD_QUIT, tr("Quit"));
         let _ = SetMenuDefaultItem(menu, CMD_OPEN, 0);
 
         let mut pt = POINT::default();

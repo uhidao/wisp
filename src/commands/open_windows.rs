@@ -1,4 +1,5 @@
 //! Open windows, for switching to one or closing it.
+use crate::i18n::tr;
 
 use windows::{
     Win32::{
@@ -560,23 +561,23 @@ pub fn target_items(query: &str, target: Option<&Target>) -> Vec<crate::search::
     };
     let choices = [
         (
-            "Minimize window",
+            tr("Minimize window"),
             "minimize window",
             Control::Minimize,
             style & WS_MINIMIZEBOX.0 != 0,
         ),
         (
-            if zoomed { "Restore window" } else { "Maximize window" },
+            if zoomed { tr("Restore window") } else { tr("Maximize window") },
             if zoomed { "restore window" } else { "maximize window" },
             if zoomed { Control::Restore } else { Control::Maximize },
             style & WS_MAXIMIZEBOX.0 != 0,
         ),
-        ("Close window", "close window", Control::Close, true),
+        (tr("Close window"), "close window", Control::Close, true),
         (
             if topmost {
-                "Stop keeping window on top"
+                tr("Stop keeping window on top")
             } else {
-                "Keep window always on top"
+                tr("Keep window always on top")
             },
             "always on top",
             Control::Topmost(!topmost),

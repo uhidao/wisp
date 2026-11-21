@@ -1,6 +1,7 @@
 //! The settings window: a sidebar of pages. `--welcome` shows the one-time
 //! onboarding instead.
 
+use crate::i18n::tr;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -25,13 +26,19 @@ use crate::{
 const ICON_SVG: &[u8] = include_bytes!("../../assets/icon.svg");
 
 /// Config values and the labels the dropdowns show for them.
-const THEMES: [(&str, &str); 3] = [("system", "System"), ("dark", "Dark"), ("light", "Light")];
-const BACKDROPS: [(&str, &str); 3] = [("acrylic", "Acrylic"), ("mica", "Mica"), ("solid", "Solid")];
-const WINDOW_LISTS: [(&str, &str); 3] = [
-    ("multiple", "Only for multiple windows"),
-    ("always", "Always"),
-    ("off", "Off"),
-];
+fn themes() -> [(&'static str, &'static str); 3] {
+    [("system", tr("System")), ("dark", tr("Dark")), ("light", tr("Light"))]
+}
+fn backdrops() -> [(&'static str, &'static str); 3] {
+    [("acrylic", tr("Acrylic")), ("mica", tr("Mica")), ("solid", tr("Solid"))]
+}
+fn window_lists() -> [(&'static str, &'static str); 3] {
+    [
+        ("multiple", tr("Only for multiple windows")),
+        ("always", tr("Always")),
+        ("off", tr("Off")),
+    ]
+}
 const ONBOARDING_STEPS: usize = 3;
 /// Dock color presets as `0xRRGGBBAA`. Each brings its own strength, so one
 /// never inherits the last color's: black is solid, the others let some of
@@ -59,10 +66,10 @@ impl Page {
 
     fn title(self) -> &'static str {
         match self {
-            Self::General => "General",
-            Self::Appearance => "Appearance",
-            Self::Search => "Search",
-            Self::About => "About",
+            Self::General => tr("General"),
+            Self::Appearance => tr("Appearance"),
+            Self::Search => tr("Search"),
+            Self::About => tr("About"),
         }
     }
 
@@ -171,7 +178,7 @@ fn dock_value(color: Hsla) -> String {
 fn screen_choices(current: &str) -> (Vec<String>, Vec<SharedString>) {
     let main = screens::main();
     let mut values = vec![screens::POINTER.to_owned(), screens::MAIN.to_owned()];
-    let mut labels: Vec<SharedString> = vec!["Follow the pointer".into(), "Main screen".into()];
+    let mut labels: Vec<SharedString> = vec![tr("Follow the pointer").into(), tr("Main screen").into()];
     for screen in screens::list() {
         labels.push(if Some(screen.bounds) == main {
             format!("{} (main)", screen.name).into()
@@ -182,7 +189,7 @@ fn screen_choices(current: &str) -> (Vec<String>, Vec<SharedString>) {
     }
     if !current.is_empty() && !values.iter().any(|value| value.eq_ignore_ascii_case(current)) {
         values.push(current.to_owned());
-        labels.push("A screen that isn't connected".into());
+        labels.push(tr("A screen that isn't connected").into());
     }
     (values, labels)
 }
@@ -226,27 +233,27 @@ impl Settings {
         };
         let shortcut = cx.new(|cx| InputState::new(window, cx).default_value(config.hotkey.clone()));
         let url = cx.new(|cx| InputState::new(window, cx).default_value(config.search_url.clone()));
-        let folder = cx.new(|cx| InputState::new(window, cx).placeholder("Folder name"));
+        let folder = cx.new(|cx| InputState::new(window, cx).placeholder(tr("Folder name")));
         let theme = cx.new(|cx| {
             SelectState::new(
-                SearchableVec::new(labels(&THEMES)),
-                index_of(&THEMES, &config.theme),
+                { let t = themes(); SearchableVec::new(labels(&t)) },
+                { let t = themes(); index_of(&t, &config.theme) },
                 window,
                 cx,
             )
         });
         let backdrop = cx.new(|cx| {
             SelectState::new(
-                SearchableVec::new(labels(&BACKDROPS)),
-                index_of(&BACKDROPS, &config.backdrop),
+                { let b = backdrops(); SearchableVec::new(labels(&b)) },
+                { let b = backdrops(); index_of(&b, &config.backdrop) },
                 window,
                 cx,
             )
         });
         let window_list = cx.new(|cx| {
             SelectState::new(
-                SearchableVec::new(labels(&WINDOW_LISTS)),
-                index_of(&WINDOW_LISTS, &config.window_list),
+                { let w = window_lists(); SearchableVec::new(labels(&w)) },
+                { let w = window_lists(); index_of(&w, &config.window_list) },
                 window,
                 cx,
             )
@@ -328,7 +335,7 @@ impl Settings {
         .detach();
         cx.subscribe_in(&theme, window, |this, _, event, window, cx| {
             if let SelectEvent::Confirm(Some(label)) = event
-                && let Some(value) = value_of(&THEMES, label)
+                && let Some(value) = { let t = themes(); value_of(&t, label) }
             {
                 this.save("theme", value.into(), window, cx);
             }
@@ -336,7 +343,7 @@ impl Settings {
         .detach();
         cx.subscribe_in(&backdrop, window, |this, _, event, window, cx| {
             if let SelectEvent::Confirm(Some(label)) = event
-                && let Some(value) = value_of(&BACKDROPS, label)
+                && let Some(value) = { let b = backdrops(); value_of(&b, label) }
             {
                 this.save("backdrop", value.into(), window, cx);
             }
@@ -344,7 +351,7 @@ impl Settings {
         .detach();
         cx.subscribe_in(&window_list, window, |this, _, event, window, cx| {
             if let SelectEvent::Confirm(Some(label)) = event
-                && let Some(value) = value_of(&WINDOW_LISTS, label)
+                && let Some(value) = { let w = window_lists(); value_of(&w, label) }
             {
                 this.save("window_list", value.into(), window, cx);
             }
@@ -528,11 +535,11 @@ impl Settings {
         v_flex()
             .child(divider(p))
             .child(row(
-                "Custom dock color",
-                "Colors the dock and the launcher.",
+                tr("Custom dock color"),
+                tr("Colors the dock and the launcher."),
                 Switch::new("custom-dock-color")
                     .checked(custom)
-                    .accessibility_label("Custom dock color")
+                    .accessibility_label(tr("Custom dock color"))
                     .on_change(
                         cx.listener(|this, enabled: &bool, window, cx| {
                             this.set_custom_dock_color(*enabled, window, cx)
@@ -543,7 +550,7 @@ impl Settings {
             .when(custom, |rows| {
                 rows.child(divider(p)).child(
                     item(
-                        "Dock color",
+                        tr("Dock color"),
                         "With Acrylic, the color's alpha sets how much of the theme's acrylic shows through. Mica and \
                          Solid show the color at full strength.",
                         p,
@@ -556,11 +563,11 @@ impl Settings {
                             .child(
                                 ColorSelect::new(&self.dock_picker)
                                     .featured_colors(DOCK_COLORS.map(hsla_of).to_vec())
-                                    .accessibility_label("Dock color")
+                                    .accessibility_label(tr("Dock color"))
                                     .w(px(170.)),
                             )
                             .children(
-                                ["Red", "Green", "Blue"]
+                                [tr("Red"), tr("Green"), tr("Blue")]
                                     .into_iter()
                                     .zip(&self.dock_rgb)
                                     .map(|(name, field)| {
@@ -589,11 +596,11 @@ impl Settings {
             (0xfaf9f6, 0x111111)
         };
         let title = if self.onboarding.is_some() {
-            "Welcome to Wisp"
+            tr("Welcome to Wisp")
         } else if crate::channel::NIGHTLY {
-            "Wisp Nightly Settings"
+            tr("Wisp Nightly Settings")
         } else {
-            "Wisp Settings"
+            tr("Wisp Settings")
         };
         system::style_title_bar(title, dark, background, text);
     }
@@ -602,7 +609,7 @@ impl Settings {
         let result = self
             .store
             .as_ref()
-            .ok_or_else(|| "Cannot find the config folder.".into())
+            .ok_or_else(|| tr("Cannot find the config folder.").into())
             .and_then(|store| store.set(key, value));
         match result {
             Ok(config) => {
@@ -648,7 +655,7 @@ impl Settings {
         let result = self
             .store
             .as_ref()
-            .ok_or_else(|| "Cannot find the config folder.".into())
+            .ok_or_else(|| tr("Cannot find the config folder.").into())
             .and_then(Store::load);
         match result {
             Ok(config) => {
@@ -660,13 +667,13 @@ impl Settings {
                 self.shortcut
                     .update(cx, |input, cx| input.set_value(hotkey, window, cx));
                 self.url.update(cx, |input, cx| input.set_value(url, window, cx));
-                let theme = index_of(&THEMES, &self.config.theme);
+                let theme = { let t = themes(); index_of(&t, &self.config.theme) };
                 self.theme
                     .update(cx, |state, cx| state.set_selected_index(theme, window, cx));
-                let backdrop = index_of(&BACKDROPS, &self.config.backdrop);
+                let backdrop = { let b = backdrops(); index_of(&b, &self.config.backdrop) };
                 self.backdrop
                     .update(cx, |state, cx| state.set_selected_index(backdrop, window, cx));
-                let window_list = index_of(&WINDOW_LISTS, &self.config.window_list);
+                let window_list = { let w = window_lists(); index_of(&w, &self.config.window_list) };
                 self.window_list
                     .update(cx, |state, cx| state.set_selected_index(window_list, window, cx));
                 // Screens may have come or gone since Settings opened.
@@ -750,7 +757,7 @@ impl Settings {
         let result = self
             .store
             .as_ref()
-            .ok_or_else(|| "Cannot find the config folder.".into())
+            .ok_or_else(|| tr("Cannot find the config folder.").into())
             .and_then(|store| {
                 let existed = store.path.exists();
                 store.ensure_exists()?;
@@ -822,36 +829,36 @@ impl Settings {
         };
         let busy = |label: &'static str| Button::new("busy").label(label).disabled(true).into_any_element();
         let (description, control): (SharedString, AnyElement) = match &self.updates {
-            Updates::Idle => ("".into(), check("Check for updates", cx)),
-            Updates::Checking => ("".into(), busy("Checking…")),
-            Updates::Latest => ("Up to date.".into(), check("Check again", cx)),
+            Updates::Idle => ("".into(), check(tr("Check for updates"), cx)),
+            Updates::Checking => ("".into(), busy(tr("Checking…"))),
+            Updates::Latest => (tr("Up to date.").into(), check(tr("Check again"), cx)),
             Updates::Available(release) => {
                 let page = release.page.clone();
                 (
-                    format!("Wisp {} is available.", release.version()).into(),
+                    tr_fmt!("Wisp {} is available.", release.version()).into(),
                     h_flex()
                         .gap_2()
                         .child(
                             Button::new("release-notes")
                                 .ghost()
-                                .label("What's new")
+                                .label(tr("What's new"))
                                 .on_click(move |_, _, cx| cx.open_url(&page)),
                         )
                         .children(manager.is_none().then(|| {
                             Button::new("install-update")
                                 .primary()
-                                .label("Update")
+                                .label(tr("Update"))
                                 .on_click(cx.listener(|this, _, _, cx| this.install_update(cx)))
                         }))
                         .into_any_element(),
                 )
             }
-            Updates::Installing => ("Wisp restarts when it is done.".into(), busy("Updating…")),
+            Updates::Installing => (tr("Wisp restarts when it is done.").into(), busy(tr("Updating…"))),
             Updates::Installed(version) => (
-                format!("Wisp {version} is installed.").into(),
+                tr_fmt!("Wisp {} is installed.", version).into(),
                 Button::new("restart-settings")
                     .primary()
-                    .label("Restart Settings")
+                    .label(tr("Restart Settings"))
                     .on_click(cx.listener(|this, _, _, cx| match update::restart_settings() {
                         Ok(()) => cx.quit(),
                         Err(error) => {
@@ -868,7 +875,7 @@ impl Settings {
             _ => None,
         };
         v_flex()
-            .child(row("Updates", description, control, p))
+            .child(row(tr("Updates"), description, control, p))
             .children(manager.map(|manager| {
                 div()
                     .px_4()
@@ -944,13 +951,13 @@ impl Settings {
             .child(
                 h_flex()
                     .gap_2()
-                    .child(Input::new(&self.shortcut).aria_label("Shortcut").flex_1())
+                    .child(Input::new(&self.shortcut).aria_label(tr("Shortcut")).flex_1())
                     .child(
                         Button::new("record")
                             .label(if self.recording {
-                                "Press a shortcut…"
+                                tr("Press a shortcut…")
                             } else {
-                                "Record"
+                                tr("Record")
                             })
                             .when(self.recording, |b| b.primary())
                             .on_click(cx.listener(|this, _, window, cx| this.start_recording(window, cx))),
@@ -972,12 +979,12 @@ impl Settings {
 
     fn status_controls(&self, p: Palette, cx: &mut Context<Self>) -> Div {
         let mut block = group(p).child(row(
-            "Group status icons",
+            tr("Group status icons"),
             "",
             Switch::new("group-status")
                 .checked(!self.config.dock_status_group.is_empty())
                 .disabled(self.config.dock_status_group.is_empty() && self.config.dock_status_icons.is_empty())
-                .accessibility_label("Group status icons")
+                .accessibility_label(tr("Group status icons"))
                 .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                     let mut names = this.config.dock_status_group.clone();
                     names.extend(this.config.dock_status_icons.clone());
@@ -996,10 +1003,10 @@ impl Settings {
             p,
         ));
         for (name, title) in [
-            ("sound", "Sound"),
-            ("battery", "Battery"),
-            ("wifi", "Wi-Fi"),
-            ("bluetooth", "Bluetooth"),
+            ("sound", tr("Sound")),
+            ("battery", tr("Battery")),
+            ("wifi", tr("Wi-Fi")),
+            ("bluetooth", tr("Bluetooth")),
         ] {
             let selected = if self.config.dock_status_group.iter().any(|n| n == name) {
                 0
@@ -1009,7 +1016,7 @@ impl Settings {
                 2
             };
             let mut segments = ButtonGroup::new(name).small();
-            for (index, text) in ["In group", "Own icon", "Hidden"].into_iter().enumerate() {
+            for (index, text) in [tr("In group"), tr("Own icon"), tr("Hidden")].into_iter().enumerate() {
                 segments = segments.child(
                     Button::new((name, index))
                         .label(text)
@@ -1049,17 +1056,17 @@ impl Settings {
     fn autostart_switch(&self, cx: &mut Context<Self>) -> Switch {
         Switch::new("autostart")
             .checked(self.autostart)
-            .accessibility_label("Start with Windows")
+            .accessibility_label(tr("Start with Windows"))
             .on_change(cx.listener(|this, enabled: &bool, _, cx| this.set_autostart(*enabled, cx)))
     }
 
     fn win_key_row(&self, p: Palette, cx: &mut Context<Self>) -> Div {
         row(
-            "Use Win key",
+            tr("Use Win key"),
             "Tap the Windows key alone to open Wisp instead of Start.",
             Switch::new("win-key")
                 .checked(self.config.win_key)
-                .accessibility_label("Use Win key")
+                .accessibility_label(tr("Use Win key"))
                 .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                     this.save("win_key", (*enabled).into(), window, cx);
                 })),
@@ -1070,11 +1077,11 @@ impl Settings {
     fn general(&self, p: Palette, cx: &mut Context<Self>) -> AnyElement {
         v_flex()
             .gap_2()
-            .child(label("Launcher", p))
+            .child(label(tr("Launcher"), p))
             .child(
                 group(p)
                     .child(
-                        item("Shortcut", "", p)
+                        item(tr("Shortcut"), "", p)
                             .child(self.shortcut_control(p, cx))
                             .children(self.conflict_warning(p)),
                     )
@@ -1082,15 +1089,15 @@ impl Settings {
                     .child(self.win_key_row(p, cx)),
             )
             .child(div().h_3())
-            .child(label("Dock", p))
+            .child(label(tr("Dock"), p))
             .child(
                 group(p)
                     .child(row(
-                        "Show the dock",
+                        tr("Show the dock"),
                         "",
                         Switch::new("dock")
                             .checked(self.config.dock)
-                            .accessibility_label("Show the dock")
+                            .accessibility_label(tr("Show the dock"))
                             .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                                 this.save("dock", (*enabled).into(), window, cx);
                             })),
@@ -1098,12 +1105,12 @@ impl Settings {
                     ))
                     .child(divider(p))
                     .child(row(
-                        "Keep the dock visible",
+                        tr("Keep the dock visible"),
                         "While the taskbar is hidden, windows stop above the dock.",
                         Switch::new("dock-visible")
                             .checked(!self.config.dock_autohide)
                             .disabled(!self.config.dock)
-                            .accessibility_label("Keep the dock visible")
+                            .accessibility_label(tr("Keep the dock visible"))
                             .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                                 this.save("dock_autohide", (!*enabled).into(), window, cx);
                             })),
@@ -1111,7 +1118,7 @@ impl Settings {
                     ))
                     .child(divider(p))
                     .child(row(
-                        "Screen",
+                        tr("Screen"),
                         // A dock that stays visible can't follow the pointer.
                         if self.config.dock_autohide
                             || !matches!(self.config.dock_screen.as_str(), "" | screens::POINTER)
@@ -1122,18 +1129,18 @@ impl Settings {
                         },
                         Select::new(&self.dock_screen)
                             .disabled(!self.config.dock)
-                            .accessibility_label("Screen")
+                            .accessibility_label(tr("Screen"))
                             .w(px(190.)),
                         p,
                     ))
                     .child(divider(p))
                     .child(row(
-                        "Search button",
+                        tr("Search button"),
                         "",
                         Switch::new("dock-search-button")
                             .checked(self.config.dock_search_button)
                             .disabled(!self.config.dock)
-                            .accessibility_label("Search button")
+                            .accessibility_label(tr("Search button"))
                             .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                                 this.save("dock_search_button", (*enabled).into(), window, cx);
                             })),
@@ -1141,35 +1148,35 @@ impl Settings {
                     ))
                     .child(divider(p))
                     .child(
-                        item("App icon size", format!("{} DIP", self.config.dock_icon_size), p)
-                            .child(Slider::new(&self.app_icon_size).accessibility_label("App icon size")),
+                        item(tr("App icon size"), format!("{} DIP", self.config.dock_icon_size), p)
+                            .child(Slider::new(&self.app_icon_size).accessibility_label(tr("App icon size"))),
                     )
                     .child(divider(p))
                     .child(row(
-                        "Pinned apps",
+                        tr("Pinned apps"),
                         format!("{} pinned", self.pinned_count),
                         Button::new("unpin-all")
-                            .label("Unpin all")
+                            .label(tr("Unpin all"))
                             .disabled(self.pinned_count == 0)
                             .on_click(cx.listener(|this, _, _, cx| this.unpin_all(cx))),
                         p,
                     ))
                     .child(divider(p))
                     .child(row(
-                        "App window list",
+                        tr("App window list"),
                         "Lists an app's windows when you hover its icon.",
                         Select::new(&self.window_list)
-                            .accessibility_label("App window list")
+                            .accessibility_label(tr("App window list"))
                             .w(px(190.)),
                         p,
                     ))
                     .child(divider(p))
                     .child(row(
-                        "Hide the taskbar",
+                        tr("Hide the taskbar"),
                         "The taskbar comes back when Wisp quits.",
                         Switch::new("hide-taskbar")
                             .checked(self.config.hide_taskbar)
-                            .accessibility_label("Hide the taskbar")
+                            .accessibility_label(tr("Hide the taskbar"))
                             .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                                 this.save("hide_taskbar", (*enabled).into(), window, cx);
                             })),
@@ -1177,11 +1184,11 @@ impl Settings {
                     ))
                     .child(divider(p))
                     .child(row(
-                        "Launcher at the bottom",
+                        tr("Launcher at the bottom"),
                         "",
                         Switch::new("position-bottom")
                             .checked(self.config.position == "bottom")
-                            .accessibility_label("Launcher at the bottom")
+                            .accessibility_label(tr("Launcher at the bottom"))
                             .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                                 let position = if *enabled { "bottom" } else { "center" };
                                 this.save("position", position.into(), window, cx);
@@ -1190,13 +1197,13 @@ impl Settings {
                     )),
             )
             .child(div().h_3())
-            .child(label("Status", p))
+            .child(label(tr("Status"), p))
             .child(self.status_controls(p, cx))
             .child(div().h_3())
-            .child(label("Updates", p))
+            .child(label(tr("Updates"), p))
             .child(
                 group(p).child(row(
-                    "Check for updates",
+                    tr("Check for updates"),
                     if crate::channel::NIGHTLY {
                         "Nightly builds skip checks."
                     } else {
@@ -1204,7 +1211,7 @@ impl Settings {
                     },
                     Switch::new("check-for-updates")
                         .checked(self.config.check_for_updates)
-                        .accessibility_label("Check for updates")
+                        .accessibility_label(tr("Check for updates"))
                         .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                             this.save("check_for_updates", (*enabled).into(), window, cx);
                         })),
@@ -1212,8 +1219,8 @@ impl Settings {
                 )),
             )
             .child(div().h_3())
-            .child(label("Startup", p))
-            .child(group(p).child(row("Start with Windows", "", self.autostart_switch(cx), p)))
+            .child(label(tr("Startup"), p))
+            .child(group(p).child(row(tr("Start with Windows"), "", self.autostart_switch(cx), p)))
             .into_any_element()
     }
 
@@ -1221,20 +1228,20 @@ impl Settings {
         let advanced_open = self.advanced_open;
         v_flex()
             .gap_2()
-            .child(label("Look", p))
+            .child(label(tr("Look"), p))
             .child(
                 group(p)
                     .child(row(
-                        "Theme",
+                        tr("Theme"),
                         "",
-                        Select::new(&self.theme).accessibility_label("Theme").w(px(160.)),
+                        Select::new(&self.theme).accessibility_label(tr("Theme")).w(px(160.)),
                         p,
                     ))
                     .child(divider(p))
                     .child(row(
-                        "Backdrop",
+                        tr("Backdrop"),
                         "Acrylic and Mica blur what is behind the launcher and fade in. Solid appears at once.",
-                        Select::new(&self.backdrop).accessibility_label("Backdrop").w(px(160.)),
+                        Select::new(&self.backdrop).accessibility_label(tr("Backdrop")).w(px(160.)),
                         p,
                     ))
                     .child(divider(p))
@@ -1243,7 +1250,7 @@ impl Settings {
                             .gap_4()
                             .px_4()
                             .py_3()
-                            .child(div().flex_1().child("Advanced"))
+                            .child(div().flex_1().child(tr("Advanced")))
                             .child(
                                 Icon::new(IconName::ChevronDown)
                                     .size_4()
@@ -1255,7 +1262,7 @@ impl Settings {
                             .id("advanced")
                             .cursor_pointer()
                             .role(Role::Button)
-                            .aria_label("Advanced")
+                            .aria_label(tr("Advanced"))
                             .aria_expanded(advanced_open)
                             .on_click(cx.listener(|this, _, _, cx| {
                                 this.advanced_open = !this.advanced_open;
@@ -1265,11 +1272,11 @@ impl Settings {
                     .when(advanced_open, |group| group.child(self.advanced_rows(p, cx))),
             )
             .child(div().h_3())
-            .child(label("Results", p))
+            .child(label(tr("Results"), p))
             .child(
                 group(p).child(
-                    item("Visible results", self.config.max_results.to_string(), p)
-                        .child(Slider::new(&self.results).accessibility_label("Results visible at once")),
+                    item(tr("Visible results"), self.config.max_results.to_string(), p)
+                        .child(Slider::new(&self.results).accessibility_label(tr("Results visible at once"))),
                 ),
             )
             .into_any_element()
@@ -1288,8 +1295,8 @@ impl Settings {
                         Button::new(("remove-folder", index))
                             .small()
                             .ghost()
-                            .label("Remove")
-                            .accessibility_label(format!("Remove {name}"))
+                            .label(tr("Remove"))
+                            .accessibility_label(tr_fmt!("Remove {}", name))
                             .on_click(cx.listener(move |this, _, window, cx| {
                                 let mut folders = this.config.file_search_exclude.clone();
                                 if index < folders.len() {
@@ -1302,15 +1309,15 @@ impl Settings {
         );
         v_flex()
             .gap_2()
-            .child(label("Apps and web", p))
+            .child(label(tr("Apps and web"), p))
             .child(
                 group(p)
                     .child(row(
-                        "Recent apps",
+                        tr("Recent apps"),
                         "Shown when the search box is empty.",
                         Switch::new("recent")
                             .checked(self.config.show_recent)
-                            .accessibility_label("Show recent apps")
+                            .accessibility_label(tr("Show recent apps"))
                             .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                                 this.save("show_recent", (*enabled).into(), window, cx);
                             })),
@@ -1318,21 +1325,21 @@ impl Settings {
                     ))
                     .child(divider(p))
                     .child(
-                        item("Web search URL", "Wisp replaces {query} with your search text.", p)
-                            .child(Input::new(&self.url).aria_label("Web search URL"))
+                        item(tr("Web search URL"), "Wisp replaces {query} with your search text.", p)
+                            .child(Input::new(&self.url).aria_label(tr("Web search URL")))
                             .children(self.url_error.as_ref().map(|e| error_text(e, p))),
                     ),
             )
             .child(div().h_3())
-            .child(label("Files", p))
+            .child(label(tr("Files"), p))
             .child(
                 group(p)
                     .child(row(
-                        "File search",
+                        tr("File search"),
                         "",
                         Switch::new("file-search")
                             .checked(self.config.file_search)
-                            .accessibility_label("File search")
+                            .accessibility_label(tr("File search"))
                             .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                                 this.save("file_search", (*enabled).into(), window, cx);
                             })),
@@ -1340,11 +1347,11 @@ impl Settings {
                     ))
                     .child(divider(p))
                     .child(row(
-                        "Use Everything",
+                        tr("Use Everything"),
                         "When Everything is running, search every drive with it.",
                         Switch::new("file-search-everything")
                             .checked(self.config.file_search_everything)
-                            .accessibility_label("Use Everything")
+                            .accessibility_label(tr("Use Everything"))
                             .on_change(cx.listener(|this, enabled: &bool, window, cx| {
                                 this.save("file_search_everything", (*enabled).into(), window, cx);
                             })),
@@ -1352,14 +1359,14 @@ impl Settings {
                     ))
                     .child(divider(p))
                     .child(
-                        item("Skipped folders", "Names that start with a dot are always skipped.", p)
+                        item(tr("Skipped folders"), "Names that start with a dot are always skipped.", p)
                             .child(
                                 h_flex()
                                     .gap_2()
-                                    .child(Input::new(&self.folder).aria_label("Folder name to skip").flex_1())
+                                    .child(Input::new(&self.folder).aria_label(tr("Folder name to skip")).flex_1())
                                     .child(
                                         Button::new("add-folder")
-                                            .label("Add")
+                                            .label(tr("Add"))
                                             .on_click(cx.listener(|this, _, window, cx| this.add_folder(window, cx))),
                                     ),
                             )
@@ -1393,19 +1400,19 @@ impl Settings {
             .child(
                 group(p)
                     .child(row(
-                        "Config file",
+                        tr("Config file"),
                         path,
                         Button::new("open-config")
-                            .label("Open")
+                            .label(tr("Open"))
                             .on_click(cx.listener(|this, _, _, cx| this.open_config(cx))),
                         p,
                     ))
                     .child(divider(p))
                     .child(row(
-                        "Source code",
+                        tr("Source code"),
                         "github.com/SumirSeth/wisp",
                         Button::new("github")
-                            .label("Open")
+                            .label(tr("Open"))
                             .on_click(|_, _, cx| cx.open_url("https://github.com/SumirSeth/wisp")),
                         p,
                     )),
@@ -1427,13 +1434,13 @@ impl Settings {
                     .child(
                         Button::new("fix-config")
                             .small()
-                            .label("Open config file")
+                            .label(tr("Open config file"))
                             .on_click(cx.listener(|this, _, _, cx| this.open_config(cx))),
                     )
                     .child(
                         Button::new("reload")
                             .small()
-                            .label("Reload")
+                            .label(tr("Reload"))
                             .on_click(cx.listener(|this, _, window, cx| this.reload(window, cx))),
                     ),
             )
@@ -1490,12 +1497,12 @@ impl Settings {
 
     fn onboarding_view(&self, step: usize, p: Palette, cx: &mut Context<Self>) -> AnyElement {
         let shortcut = group(p)
-            .child(item("Shortcut", "", p).child(self.shortcut_control(p, cx)))
+            .child(item(tr("Shortcut"), "", p).child(self.shortcut_control(p, cx)))
             .child(divider(p))
             .child(self.win_key_row(p, cx));
         let (title, body): (&str, Div) = match step {
             0 => (
-                "Welcome to Wisp",
+                tr("Welcome to Wisp"),
                 v_flex()
                     .gap_4()
                     .child(
@@ -1511,11 +1518,11 @@ impl Settings {
                     .child(shortcut),
             ),
             _ => (
-                "Start with Windows",
+                tr("Start with Windows"),
                 v_flex()
                     .gap_4()
                     .child(group(p).child(row(
-                        "Start with Windows",
+                        tr("Start with Windows"),
                         "",
                         self.autostart_switch(cx),
                         p,
@@ -1555,7 +1562,7 @@ impl Settings {
                     .when(step > 0, |row| {
                         row.child(
                             Button::new("back")
-                                .label("Back")
+                                .label(tr("Back"))
                                 .on_click(cx.listener(|this, _, _, cx| {
                                     this.recording = false;
                                     this.onboarding = this.onboarding.map(|s| s.saturating_sub(1));
@@ -1566,7 +1573,7 @@ impl Settings {
                     .child(
                         Button::new("next")
                             .primary()
-                            .label(if last { "Done" } else { "Next" })
+                            .label(if last { tr("Done") } else { tr("Next") })
                             .disabled(self.shortcut_error.is_some())
                             .on_click(cx.listener(move |this, _, window, cx| {
                                 this.recording = false;

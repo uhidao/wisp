@@ -1,4 +1,5 @@
 //! Comment-preserving edits and atomic config replacement, shared with Settings.
+use crate::i18n::tr;
 
 use std::{io::Write, path::Path};
 use toml_edit::{DocumentMut, Item, Value};
@@ -20,7 +21,7 @@ pub fn replace(doc: &mut DocumentMut, key: &str, mut value: Value) {
 }
 
 pub fn save(path: &Path, doc: &DocumentMut) -> Result<(), String> {
-    let parent = path.parent().ok_or("The config path has no folder.")?;
+    let parent = path.parent().ok_or(tr("The config path has no folder."))?;
     std::fs::create_dir_all(parent).map_err(|error| format!("Cannot create the config folder: {error}"))?;
     let mut file = tempfile::NamedTempFile::new_in(parent).map_err(|error| error.to_string())?;
     file.write_all(doc.to_string().as_bytes())

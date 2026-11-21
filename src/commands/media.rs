@@ -1,6 +1,7 @@
 //! What is playing, and play, pause, next and previous, through the system
 //! media controls that Windows shows in its volume flyout.
 
+use crate::i18n::tr;
 use windows::Media::Control::{
     GlobalSystemMediaTransportControlsSession as Session, GlobalSystemMediaTransportControlsSessionManager as Manager,
     GlobalSystemMediaTransportControlsSessionPlaybackStatus as Status,
@@ -52,7 +53,7 @@ pub fn state() -> Option<State> {
 }
 
 pub fn control(control: Control) -> Result<(), String> {
-    let session = session().map_err(|_| "Nothing is playing.".to_string())?;
+    let session = session().map_err(|_| tr("Nothing is playing.").to_string())?;
     let playing = || {
         session
             .GetPlaybackInfo()

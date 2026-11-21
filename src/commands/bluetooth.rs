@@ -1,4 +1,5 @@
 //! Bluetooth: radio state and paired devices.
+use crate::i18n::tr;
 
 use windows::Devices::{
     Bluetooth::{BluetoothConnectionStatus, BluetoothDevice, BluetoothLEDevice},
@@ -37,7 +38,7 @@ pub fn state() -> Option<State> {
 }
 
 pub fn set_power(on: bool) -> Result<(), String> {
-    radio::set(RadioKind::Bluetooth, "Bluetooth", on)
+    radio::set(RadioKind::Bluetooth, tr("Bluetooth"), on)
 }
 
 /// Paired devices, classic and Low Energy, connected ones first.
@@ -162,7 +163,7 @@ mod tests {
     fn device(id: &str, container: u128, connected: bool) -> Device {
         Device {
             id: id.into(),
-            name: "Headphones".into(),
+            name: tr("Headphones").into(),
             connected,
             battery: None,
             container: Some(windows::core::GUID::from_u128(container)),

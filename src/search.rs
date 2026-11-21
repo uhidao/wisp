@@ -1,4 +1,5 @@
 //! Ranks app, file, calculator, URL, command and web search results.
+use crate::i18n::tr;
 
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config as MatcherConfig, Matcher, Utf32Str};
@@ -32,10 +33,10 @@ impl Kind {
     /// Enter action shown beside the selected result.
     pub fn verb(self) -> &'static str {
         match self {
-            Kind::App | Kind::File | Kind::Folder | Kind::Url => "Open",
-            Kind::Calc => "Copy",
+            Kind::App | Kind::File | Kind::Folder | Kind::Url => tr("Open"),
+            Kind::Calc => tr("Copy"),
             Kind::Shell => "Run",
-            Kind::Web => "Search",
+            Kind::Web => tr("Search"),
             Kind::Command => "Run",
         }
     }
@@ -59,7 +60,7 @@ pub enum Action {
     Command(Command),
     /// Opens the surface at this index in the surface library.
     Surface(usize),
-    /// A row that only shows information, such as "Looking for networks…".
+    /// A row that only shows information, such as tr("Looking for networks…").
     None,
 }
 
@@ -75,9 +76,9 @@ impl Drill {
     /// The list's name, shown before the query while it is open.
     pub fn title(self) -> &'static str {
         match self {
-            Drill::WifiNetworks => "Networks",
-            Drill::BluetoothDevices => "Devices",
-            Drill::AudioOutputs => "Output devices",
+            Drill::WifiNetworks => tr("Networks"),
+            Drill::BluetoothDevices => tr("Devices"),
+            Drill::AudioOutputs => tr("Output devices"),
         }
     }
 
@@ -143,13 +144,13 @@ impl ResultItem {
         let item = |title: &str, action: Action| ResultItem::new(self.kind, title, self.title.clone(), action);
         match &self.action {
             Action::Launch { id, path, .. } => {
-                actions.push(item("Open", self.action.clone()).glyph("\u{E8A7}").verb("Open"));
+                actions.push(item(tr("Open"), self.action.clone()).glyph("\u{E8A7}").verb(tr("Open")));
                 let admin = Action::Launch {
                     id: id.clone(),
                     path: path.clone(),
                     admin: true,
                 };
-                actions.push(item("Run as administrator", admin).glyph("\u{E7EF}").verb("Run"));
+                actions.push(item(tr("Run as administrator"), admin).glyph("\u{E7EF}").verb("Run"));
             }
             Action::Shell { command, .. } if !command.is_empty() => {
                 actions.push(item("Run", self.action.clone()).glyph("\u{E756}").verb("Run"));
@@ -157,35 +158,35 @@ impl ResultItem {
                     command: command.clone(),
                     admin: true,
                 };
-                actions.push(item("Run as administrator", admin).glyph("\u{E7EF}").verb("Run"));
+                actions.push(item(tr("Run as administrator"), admin).glyph("\u{E7EF}").verb("Run"));
             }
             Action::Command(Command::FocusWindow(hwnd)) => {
-                actions.push(item("Switch to", self.action.clone()).glyph("\u{E8A7}").verb("Switch"));
+                actions.push(item(tr("Switch to"), self.action.clone()).glyph("\u{E8A7}").verb(tr("Switch")));
                 let close = Action::Command(Command::CloseWindow(*hwnd));
                 actions.push(
-                    item("Close window", close)
+                    item(tr("Close window"), close)
                         .glyph(crate::commands::glyph::CLOSE)
-                        .verb("Close"),
+                        .verb(tr("Close")),
                 );
             }
             Action::Open(_) if self.path().is_some() => {
-                actions.push(item("Open", self.action.clone()).glyph("\u{E8A7}").verb("Open"));
+                actions.push(item(tr("Open"), self.action.clone()).glyph("\u{E8A7}").verb(tr("Open")));
             }
             _ => {}
         }
         if let Some(path) = self.path() {
             let reveal = Action::Reveal(path.into());
-            actions.push(item("Open file location", reveal).glyph("\u{E838}").verb("Open"));
+            actions.push(item(tr("Open file location"), reveal).glyph("\u{E838}").verb(tr("Open")));
             actions.push(
-                item("Copy path", Action::Copy(path.into()))
+                item(tr("Copy path"), Action::Copy(path.into()))
                     .glyph("\u{E8C8}")
-                    .verb("Copy"),
+                    .verb(tr("Copy")),
             );
         }
         actions
     }
 
-    /// Filesystem path of the result, for "Show in File Explorer" and "Copy path".
+    /// Filesystem path of the result, for tr("Show in File Explorer") and tr("Copy path").
     pub fn path(&self) -> Option<&str> {
         match (&self.kind, &self.action) {
             (Kind::App, Action::Launch { path, .. }) => path.as_deref(),
@@ -307,7 +308,7 @@ impl Searcher {
             results.push(ResultItem::new(
                 Kind::Shell,
                 if command.is_empty() {
-                    "Type a command to run"
+                    tr("Type a command to run")
                 } else {
                     command
                 },
@@ -334,7 +335,7 @@ impl Searcher {
             results.push(ResultItem::new(
                 Kind::Url,
                 url.clone(),
-                "Open in browser",
+                tr("Open in browser"),
                 Action::Open(url),
             ));
         }
@@ -380,7 +381,7 @@ impl Searcher {
         results.push(ResultItem::new(
             Kind::Web,
             format!("Search the web for \u{201C}{query}\u{201D}"),
-            host(&config.search_url).unwrap_or("Web search"),
+            host(&config.search_url).unwrap_or(tr("Web search")),
             Action::Open(config.search_url.replace("{query}", &url_encode(query))),
         ));
         results
@@ -543,7 +544,7 @@ mod tests {
     fn ranks_and_highlights_apps() {
         let apps = [
             app("Visual Studio Code"),
-            app("Notepad"),
+            app(tr("Notepad")),
             app("Visual Studio Installer"),
         ];
         let mut searcher = Searcher::new();
@@ -555,9 +556,9 @@ mod tests {
         let apps = [
             app("Visual Studio Code"),
             app("Sound Recorder"),
-            app("Command Palette"),
-            app("Windows Terminal"),
-            app("Notepad"),
+            app(tr("Command Palette")),
+            app(tr("Windows Terminal")),
+            app(tr("Notepad")),
             app("Google Chrome"),
             app("Character Map"),
         ];
@@ -570,8 +571,8 @@ mod tests {
                 .collect()
         };
         assert_eq!(titles("code"), ["Visual Studio Code"]);
-        assert_eq!(titles("note"), ["Notepad"]);
-        assert_eq!(titles("pad"), ["Notepad"]);
+        assert_eq!(titles("note"), [tr("Notepad")]);
+        assert_eq!(titles("pad"), [tr("Notepad")]);
         assert_eq!(titles("chr"), ["Google Chrome", "Character Map"]);
         assert_eq!(titles("chrme"), ["Google Chrome"]);
     }
@@ -602,7 +603,7 @@ mod tests {
     fn matches_fzf_style_operators() {
         let apps = [
             app("Visual Studio Code"),
-            app("Windows Terminal"),
+            app(tr("Windows Terminal")),
             app("Microsoft Edge"),
             app("Edge Dev Tools"),
         ];
@@ -616,7 +617,7 @@ mod tests {
                 .collect()
         };
         assert_eq!(titles("^vis"), ["Visual Studio Code"]);
-        assert_eq!(titles("terminal$"), ["Windows Terminal"]);
+        assert_eq!(titles("terminal$"), [tr("Windows Terminal")]);
         assert_eq!(titles("'edge"), ["Microsoft Edge", "Edge Dev Tools"]);
         assert_eq!(titles("'edge !dev"), ["Microsoft Edge"]);
     }
@@ -644,7 +645,7 @@ mod tests {
             searcher.search("www.rust-lang.org", &[], &h, &c)[0].title,
             "https://www.rust-lang.org"
         );
-        assert!(searcher.search("", &[app("Notepad")], &h, &c).is_empty());
+        assert!(searcher.search("", &[app(tr("Notepad"))], &h, &c).is_empty());
     }
 
     #[test]

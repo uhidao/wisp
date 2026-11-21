@@ -1,4 +1,5 @@
 //! The status matrix and clock at the right end of the dock.
+use crate::i18n::tr;
 
 use super::logic::{STATUS_ITEMS, StatusItem, StatusPlacement};
 
@@ -11,7 +12,7 @@ use windows::core::{PCWSTR, w};
 pub struct Status {
     /// In the user's time format, such as "1:45 PM" or "13:45".
     pub time: String,
-    /// "Fri 30 Oct".
+    /// tr("Fri 30 Oct").
     pub date: String,
     pub battery: Option<Battery>,
     /// `None` without an output device.
@@ -181,8 +182,8 @@ impl Status {
     pub fn tooltip_for(&self, radios: &Radios, items: &[StatusItem]) -> String {
         let volume = match self.volume {
             Some(v) if v.muted => "Muted".into(),
-            Some(v) => format!("Volume {}%", v.percent),
-            None => "No audio device".into(),
+            Some(v) => tr_fmt!("Volume {}%", v.percent),
+            None => tr("No audio device").into(),
         };
         let battery = match self.battery {
             Some(b) => format!("Battery {}%{}", b.percent, if b.charging { ", charging" } else { "" }),
@@ -199,14 +200,14 @@ impl Status {
             None => "No Wi-Fi".into(),
         };
         let bluetooth = match &radios.bluetooth {
-            Some(b) if !b.on => "Bluetooth off".into(),
+            Some(b) if !b.on => tr("Bluetooth off").into(),
             Some(b) => match b.connected.first() {
-                Some(name) if b.connected.len() > 1 => format!("Bluetooth: {name} (+{})", b.connected.len() - 1),
-                Some(name) => format!("Bluetooth: {name}"),
-                None => "Bluetooth on".into(),
+                Some(name) if b.connected.len() > 1 => tr_fmt!("Bluetooth: {} (+{})", b.connected.len() - 1),
+                Some(name) => tr_fmt!("Bluetooth: {}"),
+                None => tr("Bluetooth on").into(),
             },
-            None if !radios.read => "Bluetooth: checking".into(),
-            None => "No Bluetooth".into(),
+            None if !radios.read => tr("Bluetooth: checking").into(),
+            None => tr("No Bluetooth").into(),
         };
         let lines = [volume, battery, wifi, bluetooth];
         items
@@ -399,7 +400,7 @@ mod tests {
         bt.on = true;
         assert_eq!(bluetooth_icon(true, Some(&bt)).opacity, 0.7);
         assert!(!bluetooth_icon(true, Some(&bt)).badge);
-        bt.connected.push("Mouse".into());
+        bt.connected.push(tr("Mouse").into());
         assert!(bluetooth_icon(true, Some(&bt)).badge);
         assert_eq!(bluetooth_icon(true, Some(&bt)).opacity, 1.0);
         bt.on = false;
@@ -435,7 +436,7 @@ mod tests {
         });
         radios.bluetooth = Some(crate::commands::bluetooth::State {
             on: true,
-            connected: vec!["Headphones".into(), "Mouse".into()],
+            connected: vec![tr("Headphones").into(), tr("Mouse").into()],
         });
         assert_eq!(
             status.tooltip_for(&radios, &STATUS_ITEMS),
@@ -455,7 +456,7 @@ mod tests {
                 .tooltip_for(&radios, &STATUS_ITEMS)
                 .ends_with("Wi-Fi off\nBluetooth off")
         );
-        assert_eq!(status.tooltip_for(&radios, &[StatusItem::Bluetooth]), "Bluetooth off");
+        assert_eq!(status.tooltip_for(&radios, &[StatusItem::Bluetooth]), tr("Bluetooth off"));
         assert_eq!(
             status.tooltip_for(&radios, &[StatusItem::Battery, StatusItem::Wifi]),
             "Battery 80%, charging\nWi-Fi off"

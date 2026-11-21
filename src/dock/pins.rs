@@ -1,4 +1,5 @@
 //! Apps pinned to the dock, kept in dock order in the channel's data folder.
+use crate::i18n::tr;
 
 use std::{io::Write, path::Path};
 
@@ -54,10 +55,10 @@ pub fn load(path: &Path) -> Vec<Pin> {
 
 /// Saves the pins. The file is written aside first so a crash keeps the old one.
 pub fn save<'a>(path: &Path, apps: impl IntoIterator<Item = &'a Pin>) -> std::io::Result<()> {
-    let text = render(apps).ok_or_else(|| std::io::Error::other("Cannot save dock pins."))?;
+    let text = render(apps).ok_or_else(|| std::io::Error::other(tr("Cannot save dock pins.")))?;
     let parent = path
         .parent()
-        .ok_or_else(|| std::io::Error::other("Cannot find the pins folder."))?;
+        .ok_or_else(|| std::io::Error::other(tr("Cannot find the pins folder.")))?;
     std::fs::create_dir_all(parent)?;
     let tmp = path.with_extension("toml.tmp");
     let mut file = std::fs::File::create(&tmp)?;
@@ -75,7 +76,7 @@ mod tests {
     fn pins_keep_their_order_through_the_file() {
         let apps = [
             Pin {
-                name: "Notepad".into(),
+                name: tr("Notepad").into(),
                 id: r"C:\Windows\notepad.exe".into(),
                 path: Some(r"C:\Windows\notepad.exe".into()),
             },

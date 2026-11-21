@@ -1,6 +1,6 @@
 //! Surfaces: small interfaces that Wisp composes for an intent, instead of a
-//! list of results. "Sound" shows the volume, the output devices and each
-//! app's volume; "Now" shows the time, battery, radios and what is playing.
+//! list of results. tr("Sound") shows the volume, the output devices and each
+//! app's volume; tr("Now") shows the time, battery, radios and what is playing.
 //!
 //! A surface is a spec: a title, keywords and a list of parts. Each part names
 //! something Wisp can read and change, such as `volume` or `wifi`, never code.
@@ -9,6 +9,7 @@
 //! are TOML; built-in ones ship in the executable, and users can add their own
 //! in `%APPDATA%\wisp\surfaces`.
 
+use crate::i18n::tr;
 pub mod nav;
 pub mod radios;
 
@@ -322,13 +323,13 @@ impl Library {
             .map(|(index, spec)| {
                 // Says it is Wisp's own panel, since a Settings page often has the same title.
                 let subtitle = if spec.description.is_empty() {
-                    "Wisp panel".to_string()
+                    tr("Wisp panel").to_string()
                 } else {
-                    format!("Wisp panel · {}", spec.description)
+                    tr_fmt!("Wisp panel · {}", spec.description)
                 };
                 ResultItem::new(Kind::Command, spec.title.clone(), subtitle, Action::Surface(index))
                     .glyph(GLYPH)
-                    .verb("Open")
+                    .verb(tr("Open"))
             })
             .collect()
     }
@@ -354,7 +355,7 @@ pub fn resolve(spec: &Spec, state: &State, filter: &str) -> Vec<Widget> {
         .enumerate()
         .flat_map(|(index, part)| {
             widgets(part, state).into_iter().map(move |mut widget| {
-                if spec.title == "Now" {
+                if spec.title == tr("Now") {
                     widget.quiet = true;
                     widget.wide = true;
                 }
@@ -408,7 +409,7 @@ impl Spec {
 }
 
 fn checking(label: &str, glyph: &'static str) -> Widget {
-    Widget::new(label, "Checking…", glyph, Input::Info { value: "…".into() })
+    Widget::new(label, tr("Checking…"), glyph, Input::Info { value: "…".into() })
 }
 
 fn widgets(part: &Part, state: &State) -> Vec<Widget> {
@@ -416,16 +417,16 @@ fn widgets(part: &Part, state: &State) -> Vec<Widget> {
         Part::Networks | Part::Devices => Vec::new(),
         Part::Clock { city } => clock(city.as_deref()),
         Part::Battery => match state.battery {
-            None => vec![checking("Battery", BATTERY)],
+            None => vec![checking(tr("Battery"), BATTERY)],
             Some(None) => Vec::new(),
             Some(Some(battery)) => {
                 let detail = match (battery.plugged_in, battery.saver) {
-                    (true, _) => "Plugged in",
-                    (false, true) => "Battery saver",
-                    (false, false) => "On battery",
+                    (true, _) => tr("Plugged in"),
+                    (false, true) => tr("Battery saver"),
+                    (false, false) => tr("On battery"),
                 };
                 vec![Widget::new(
-                    "Battery",
+                    tr("Battery"),
                     detail,
                     BATTERY,
                     Input::Info {
@@ -435,16 +436,16 @@ fn widgets(part: &Part, state: &State) -> Vec<Widget> {
             }
         },
         Part::Wifi => match &state.wifi {
-            None => vec![checking("Wi-Fi", glyph::WIFI)],
+            None => vec![checking(tr("Wi-Fi"), glyph::WIFI)],
             Some(None) => Vec::new(),
             Some(Some(wifi)) => {
                 let detail = match (&wifi.network, wifi.on) {
                     (Some(network), _) => network.clone(),
-                    (None, true) => "Not connected".into(),
-                    (None, false) => "Off".into(),
+                    (None, true) => tr("Not connected").into(),
+                    (None, false) => tr("Off").into(),
                 };
                 vec![Widget::new(
-                    "Wi-Fi",
+                    tr("Wi-Fi"),
                     detail,
                     glyph::WIFI,
                     Input::Link {
@@ -454,17 +455,17 @@ fn widgets(part: &Part, state: &State) -> Vec<Widget> {
             }
         },
         Part::Bluetooth => match &state.bluetooth {
-            None => vec![checking("Bluetooth", glyph::BLUETOOTH)],
+            None => vec![checking(tr("Bluetooth"), glyph::BLUETOOTH)],
             Some(None) => Vec::new(),
             Some(Some(bluetooth)) => {
                 let detail = match bluetooth.connected.as_slice() {
-                    _ if !bluetooth.on => "Off".to_string(),
-                    [] => "No devices connected".into(),
+                    _ if !bluetooth.on => tr("Off").to_string(),
+                    [] => tr("No devices connected").into(),
                     [one] => one.clone(),
                     [first, rest @ ..] => format!("{first} and {} more", rest.len()),
                 };
                 vec![Widget::new(
-                    "Bluetooth",
+                    tr("Bluetooth"),
                     detail,
                     glyph::BLUETOOTH,
                     Input::Link {
@@ -474,10 +475,10 @@ fn widgets(part: &Part, state: &State) -> Vec<Widget> {
             }
         },
         Part::Volume => match &state.audio {
-            None => vec![checking("Volume", glyph::VOLUME)],
+            None => vec![checking(tr("Volume"), glyph::VOLUME)],
             Some(None) => Vec::new(),
             Some(Some(audio)) => vec![Widget::new(
-                "Volume",
+                tr("Volume"),
                 audio.device.clone(),
                 if audio.muted { glyph::MUTED } else { glyph::VOLUME },
                 Input::Slider {
@@ -493,7 +494,7 @@ fn widgets(part: &Part, state: &State) -> Vec<Widget> {
             }
             let selected = state.outputs.iter().position(|o| o.default).unwrap_or(0);
             vec![Widget::new(
-                "Output",
+                tr("Output"),
                 "",
                 glyph::SPEAKER,
                 Input::Choice {
@@ -547,7 +548,7 @@ fn clock(city: Option<&str>) -> Vec<Widget> {
     let Some(city) = city else {
         let now = time::local();
         return vec![Widget::new(
-            "Local time",
+            tr("Local time"),
             now.short_date(),
             glyph::CLOCK,
             Input::Info { value: now.time() },
@@ -556,7 +557,7 @@ fn clock(city: Option<&str>) -> Vec<Widget> {
     let Some((zone, name)) = time::find(city).into_iter().next() else {
         return vec![Widget::new(
             city,
-            "Unknown city",
+            tr("Unknown city"),
             glyph::CLOCK,
             Input::Info { value: "?".into() },
         )];
@@ -635,7 +636,7 @@ mod tests {
             audio: Some(Some(audio::State {
                 volume: 40,
                 muted: false,
-                device: "Speakers".into(),
+                device: tr("Speakers").into(),
             })),
             battery: Some(Some(battery::State {
                 percent: 82,
@@ -663,7 +664,7 @@ mod tests {
                 .iter()
                 .map(|r| r.title.as_str())
                 .collect::<Vec<_>>(),
-            ["Now"]
+            [tr("Now")]
         );
     }
 
@@ -672,8 +673,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let library = Library::load_from(dir.path());
         let titles = |q: &str| library.search(q).into_iter().map(|r| r.title).collect::<Vec<_>>();
-        assert_eq!(titles("mixer"), ["Sound"]);
-        assert_eq!(titles("sou"), ["Sound"]);
+        assert_eq!(titles("mixer"), [tr("Sound")]);
+        assert_eq!(titles("sou"), [tr("Sound")]);
         assert!(titles("so").is_empty());
     }
 
@@ -696,7 +697,7 @@ mod tests {
         let widgets = resolve(&spec, &state(), "");
         let labels: Vec<_> = widgets.iter().map(|w| w.label.as_str()).collect();
         // Nothing plays, so media has no widget.
-        assert_eq!(labels, ["Volume", "Spotify", "Battery"]);
+        assert_eq!(labels, [tr("Volume"), "Spotify", tr("Battery")]);
         assert_eq!(widgets[1].icon.as_deref(), Some(r"exe:c:\apps\spotify.exe"));
         assert_eq!(
             widgets[1].input,
@@ -763,7 +764,7 @@ mod cache_tests {
         assert!(!library.reload_from(dir.path()));
         std::fs::write(&path, "title = 'Custom'\nkeywords = ['custom']\n").unwrap();
         assert!(library.reload_from(dir.path()));
-        assert_eq!(library.search("custom")[0].title, "Custom");
+        assert_eq!(library.search("custom")[0].title, tr("Custom"));
         assert!(!library.reload_from(dir.path()));
         std::fs::write(&path, "title = 'Changed'\nkeywords = ['custom']\n").unwrap();
         assert!(library.reload_from(dir.path()));

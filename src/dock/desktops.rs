@@ -17,7 +17,7 @@ const KEY: PCWSTR = w!(r"Software\Microsoft\Windows\CurrentVersion\Explorer\Virt
 pub struct Desktops {
     /// The desktop that shows, from 0.
     pub current: usize,
-    /// Each desktop's name, or "Desktop n" if the user never named it.
+    /// Each desktop's name, or tr("Desktop n") if the user never named it.
     pub names: Vec<String>,
 }
 

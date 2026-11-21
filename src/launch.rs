@@ -1,4 +1,5 @@
 //! Opens apps and URLs and runs commands through the Windows shell.
+use crate::i18n::tr;
 
 use windows::Win32::Foundation::{E_FAIL, ERROR_CANCELLED};
 use windows::Win32::System::Com::{COINIT_APARTMENTTHREADED, CoInitializeEx, CoTaskMemFree, CoUninitialize};
@@ -83,13 +84,14 @@ pub fn settings(welcome: bool) -> Result<()> {
         // Keep onboarding optional and avoid a modal loop while the launcher is borrowed.
         std::thread::spawn(|| {
             let com_initialized = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED).is_ok() };
+            let __title = HSTRING::from(tr("Wisp Settings"));
             let answer = unsafe {
                 MessageBoxW(
                     None,
                     w!(
                         "Settings and updates need wisp-settings.exe beside wisp.exe. Both come in the release zip.\n\nOpen the download page?"
                     ),
-                    w!("Wisp Settings"),
+                    PCWSTR(__title.as_ptr()),
                     MB_YESNO | MB_ICONINFORMATION,
                 )
             };

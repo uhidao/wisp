@@ -5,6 +5,7 @@
 //! launcher keeps the latest state the worker reported and builds results
 //! from it; the worker posts a message when new state arrives.
 
+use crate::i18n::tr;
 pub mod appearance;
 pub mod audio;
 pub mod battery;
@@ -336,9 +337,9 @@ fn row(title: impl Into<String>, subtitle: impl Into<String>, action: Action) ->
 }
 
 fn open(title: &str, link: &str) -> ResultItem {
-    row(title, "Windows Settings", Action::Open(link.into()))
+    row(title, tr("Windows Settings"), Action::Open(link.into()))
         .glyph(glyph::SETTINGS)
-        .verb("Open")
+        .verb(tr("Open"))
 }
 
 /// Whether the query lists open windows instead of searching.
@@ -399,13 +400,13 @@ fn radio_item(
     settings: &str,
 ) -> ResultItem {
     match state {
-        None => row(name, "Checking…", Action::Open(settings.into())).verb("Open"),
+        None => row(name, tr("Checking…"), Action::Open(settings.into())).verb(tr("Open")),
         Some(None) => row(
             name,
             format!("This PC has no {name} adapter"),
             Action::Open(settings.into()),
         )
-        .verb("Open"),
+        .verb(tr("Open")),
         Some(Some((on, detail))) => match target {
             Some(target) => {
                 let title = format!("Turn {name} {}", if target { "on" } else { "off" });
@@ -416,20 +417,20 @@ fn radio_item(
                 } else {
                     detail
                 };
-                row(title, subtitle, Action::Command(power(target))).verb(if target { "Turn on" } else { "Turn off" })
+                row(title, subtitle, Action::Command(power(target))).verb(if target { tr("Turn on") } else { tr("Turn off") })
             }
             None => {
-                let word = if on { "On" } else { "Off" };
+                let word = if on { "On" } else { tr("Off") };
                 let mut item = row(
                     format!("{name} · {word}"),
                     if detail.is_empty() {
-                        format!("Tab for {}", drill.title().to_lowercase())
+                        tr_fmt!("Tab for {}", drill.title().to_lowercase())
                     } else {
                         format!("{detail} · Tab for {}", drill.title().to_lowercase())
                     },
                     Action::Command(power(!on)),
                 )
-                .verb(if on { "Turn off" } else { "Turn on" });
+                .verb(if on { tr("Turn off") } else { tr("Turn on") });
                 if on {
                     let start = format!("{name} · ").encode_utf16().count() as u32;
                     item.highlights = vec![(start, 2)];
@@ -451,8 +452,8 @@ fn wifi_items(words: &[&str], state: Option<&Option<wifi::State>>) -> Vec<Result
     let state = state.map(|s| {
         s.as_ref().map(|s| {
             let detail = match &s.network {
-                Some(network) => format!("Connected to {network}"),
-                None if s.on => "Not connected".into(),
+                Some(network) => tr_fmt!("Connected to {}", network),
+                None if s.on => tr("Not connected").into(),
                 None => String::new(),
             };
             (s.on, detail)
@@ -460,7 +461,7 @@ fn wifi_items(words: &[&str], state: Option<&Option<wifi::State>>) -> Vec<Result
     });
     vec![
         radio_item(
-            "Wi-Fi",
+            tr("Wi-Fi"),
             state,
             target,
             Command::WifiPower,
@@ -468,7 +469,7 @@ fn wifi_items(words: &[&str], state: Option<&Option<wifi::State>>) -> Vec<Result
             WIFI_SETTINGS,
         )
         .glyph(glyph::WIFI),
-        open("Wi-Fi settings", WIFI_SETTINGS),
+        open(tr("Wi-Fi settings"), WIFI_SETTINGS),
     ]
 }
 
@@ -483,8 +484,8 @@ fn bluetooth_items(words: &[&str], state: Option<&Option<bluetooth::State>>) -> 
         s.as_ref().map(|s| {
             let detail = match s.connected.as_slice() {
                 _ if !s.on => String::new(),
-                [] => "No devices connected".into(),
-                [one] => format!("Connected to {one}"),
+                [] => tr("No devices connected").into(),
+                [one] => tr_fmt!("Connected to {}", one),
                 [first, rest @ ..] => format!("Connected to {first} and {} more", rest.len()),
             };
             (s.on, detail)
@@ -492,7 +493,7 @@ fn bluetooth_items(words: &[&str], state: Option<&Option<bluetooth::State>>) -> 
     });
     vec![
         radio_item(
-            "Bluetooth",
+            tr("Bluetooth"),
             state,
             target,
             Command::BluetoothPower,
@@ -500,7 +501,7 @@ fn bluetooth_items(words: &[&str], state: Option<&Option<bluetooth::State>>) -> 
             BLUETOOTH_SETTINGS,
         )
         .glyph(glyph::BLUETOOTH),
-        open("Bluetooth settings", BLUETOOTH_SETTINGS),
+        open(tr("Bluetooth settings"), BLUETOOTH_SETTINGS),
     ]
 }
 
@@ -514,9 +515,9 @@ fn volume_items(words: &[&str], state: Option<&Option<audio::State>>) -> Vec<Res
         return Vec::new();
     };
     let now = if audio.muted {
-        format!("Muted · {}", audio.device)
+        tr_fmt!("Muted · {}", audio.device)
     } else {
-        format!("Now {}% · {}", audio.volume, audio.device)
+        tr_fmt!("Now {}% · {}", audio.volume, audio.device)
     };
     let set = |percent: u32| {
         let percent = percent.min(100);
@@ -526,13 +527,13 @@ fn volume_items(words: &[&str], state: Option<&Option<audio::State>>) -> Vec<Res
             Action::Command(Command::Volume(percent)),
         )
         .glyph(glyph::VOLUME)
-        .verb("Set")
+        .verb(tr("Set"))
     };
     let mute = |muted: bool| {
         let (title, verb, glyph) = if muted {
-            ("Mute", "Mute", glyph::MUTED)
+            (tr("Mute"), tr("Mute"), glyph::MUTED)
         } else {
-            ("Unmute", "Unmute", glyph::VOLUME)
+            (tr("Unmute"), tr("Unmute"), glyph::VOLUME)
         };
         row(title, now.clone(), Action::Command(Command::Mute(muted)))
             .glyph(glyph)
@@ -549,9 +550,9 @@ fn volume_items(words: &[&str], state: Option<&Option<audio::State>>) -> Vec<Res
     match argument {
         None => {
             let title = if audio.muted {
-                "Volume · Muted".to_string()
+                tr("Volume · Muted").to_string()
             } else {
-                format!("Volume · {}%", audio.volume)
+                tr_fmt!("Volume · {}%", audio.volume)
             };
             let mut item = row(
                 title,
@@ -559,7 +560,7 @@ fn volume_items(words: &[&str], state: Option<&Option<audio::State>>) -> Vec<Res
                 Action::Command(Command::Mute(!audio.muted)),
             )
             .glyph(if audio.muted { glyph::MUTED } else { glyph::VOLUME })
-            .verb(if audio.muted { "Unmute" } else { "Mute" });
+            .verb(if audio.muted { tr("Unmute") } else { tr("Mute") });
             item.drill = Some(Drill::AudioOutputs);
             vec![item, open("Sound settings", SOUND_SETTINGS)]
         }
@@ -589,7 +590,7 @@ fn media_items(words: &[&str], state: Option<&Option<media::State>>) -> Vec<Resu
     let Some(Some(media)) = state else {
         // Nothing to control. Only "media" and "music" say so.
         return if matches!(*name, "media" | "music") {
-            vec![row("Nothing is playing", "", Action::None).glyph(glyph::PLAY).verb("")]
+            vec![row(tr("Nothing is playing"), "", Action::None).glyph(glyph::PLAY).verb("")]
         } else {
             Vec::new()
         };
@@ -620,20 +621,20 @@ fn media_items(words: &[&str], state: Option<&Option<media::State>>) -> Vec<Resu
         Action::Command(Command::Media(Control::toggle(media.playing))),
     )
     .glyph(if media.playing { glyph::PAUSE } else { glyph::PLAY })
-    .verb(if media.playing { "Pause" } else { "Play" });
+    .verb(if media.playing { tr("Pause") } else { tr("Play") });
     match *name {
         "play" | "resume" | "pause" => vec![toggle],
-        "next" | "skip" => vec![control("Next track", Control::Next, glyph::NEXT, "Next")],
+        "next" | "skip" => vec![control(tr("Next track"), Control::Next, glyph::NEXT, tr("Next"))],
         "previous" | "prev" => vec![control(
-            "Previous track",
+            tr("Previous track"),
             Control::Previous,
             glyph::PREVIOUS,
             "Previous",
         )],
         "media" | "music" => vec![
             toggle,
-            control("Next track", Control::Next, glyph::NEXT, "Next"),
-            control("Previous track", Control::Previous, glyph::PREVIOUS, "Previous"),
+            control(tr("Next track"), Control::Next, glyph::NEXT, tr("Next")),
+            control(tr("Previous track"), Control::Previous, glyph::PREVIOUS, "Previous"),
         ],
         _ => Vec::new(),
     }
@@ -686,11 +687,11 @@ fn wisp_settings_item(query: &str) -> Option<ResultItem> {
     matches.then(|| {
         row(
             format!("{} Settings", crate::channel::NAME),
-            "Theme, shortcut, dock and more",
+            tr("Theme, shortcut, dock and more"),
             Action::Command(Command::WispSettings),
         )
         .glyph(glyph::SETTINGS)
-        .verb("Open")
+        .verb(tr("Open"))
     })
 }
 
@@ -702,14 +703,14 @@ fn quit_item(query: &str) -> Option<ResultItem> {
             .iter()
             .any(|verb| verb.starts_with(query) || format!("{verb} {name}").starts_with(query));
     matches.then(|| {
-        let title = format!("Quit {}", crate::channel::NAME);
+        let title = tr_fmt!("Quit {}", crate::channel::NAME);
         row(
             &title,
             "Closes the launcher and restores the taskbar",
             Action::Command(Command::Quit),
         )
         .glyph(glyph::CLOSE)
-        .verb("Quit")
+        .verb(tr("Quit"))
     })
 }
 
@@ -725,7 +726,7 @@ fn time_items(words: &[&str]) -> Vec<ResultItem> {
                     Action::Copy(now.time()),
                 )
                 .glyph(glyph::CLOCK)
-                .verb("Copy"),
+                .verb(tr("Copy")),
             ];
         }
         ["date"] | ["today"] => {
@@ -733,7 +734,7 @@ fn time_items(words: &[&str]) -> Vec<ResultItem> {
             return vec![
                 row(date.clone(), "Today · Enter to copy", Action::Copy(date))
                     .glyph(glyph::CALENDAR)
-                    .verb("Copy"),
+                    .verb(tr("Copy")),
             ];
         }
         ["time", "in", place @ ..] | ["time", place @ ..] => place.join(" "),
@@ -751,7 +752,7 @@ fn time_items(words: &[&str]) -> Vec<ResultItem> {
                     Action::Copy(clock.time()),
                 )
                 .glyph(glyph::CLOCK)
-                .verb("Copy"),
+                .verb(tr("Copy")),
             )
         })
         .collect()
@@ -773,7 +774,7 @@ fn window_items(filter: &str, windows: &[open_windows::Window]) -> Vec<ResultIte
                 Action::Command(Command::FocusWindow(w.hwnd)),
             )
             .glyph(glyph::WINDOW)
-            .verb("Switch");
+            .verb(tr("Switch"));
             item.icon = w.icon_key();
             item
         })
@@ -783,9 +784,9 @@ fn window_items(filter: &str, windows: &[open_windows::Window]) -> Vec<ResultIte
 /// The row shown while a list loads.
 pub fn loading(drill: Drill) -> ResultItem {
     let title = match drill {
-        Drill::WifiNetworks => "Looking for networks…",
-        Drill::BluetoothDevices => "Looking for devices…",
-        Drill::AudioOutputs => "Looking for output devices…",
+        Drill::WifiNetworks => tr("Looking for networks…"),
+        Drill::BluetoothDevices => tr("Looking for devices…"),
+        Drill::AudioOutputs => tr("Looking for output devices…"),
     };
     row(title, "", Action::None).glyph(drill.glyph()).verb("")
 }
@@ -809,21 +810,21 @@ pub fn network_items(
     {
         return vec![
             row(
-                "Wi-Fi is off",
-                "Turn it on to see networks",
+                tr("Wi-Fi is off"),
+                tr("Turn it on to see networks"),
                 Action::Command(Command::WifiPower(true)),
             )
             .glyph(glyph::WIFI)
-            .verb("Turn on"),
+            .verb(tr("Turn on")),
         ];
     }
     let networks = match networks {
         None => return vec![loading(Drill::WifiNetworks)],
         Some(Err(error)) => {
             return vec![
-                row("Cannot list networks", error, Action::Open(WIFI_SETTINGS.into()))
+                row(tr("Cannot list networks"), error, Action::Open(WIFI_SETTINGS.into()))
                     .glyph(glyph::WIFI)
-                    .verb("Open"),
+                    .verb(tr("Open")),
             ];
         }
         Some(Ok(networks)) => networks,
@@ -833,11 +834,11 @@ pub fn network_items(
         .iter()
         .map(|network| {
             let mut details = vec![if network.connected {
-                "Connected"
+                tr("Connected")
             } else if network.profile.is_some() {
                 "Saved"
             } else {
-                "New"
+                tr("New")
             }];
             // Without location access, saved networks have no security details.
             if !networks.location_off {
@@ -848,7 +849,7 @@ pub fn network_items(
                 subtitle.push_str(&format!(" · {signal}% signal"));
             }
             let (action, verb) = match &network.profile {
-                _ if network.connected => (Action::Open(WIFI_SETTINGS.into()), "Settings"),
+                _ if network.connected => (Action::Open(WIFI_SETTINGS.into()), tr("Settings")),
                 Some(profile) => (Action::Command(Command::WifiConnect(profile.clone())), "Connect"),
                 None => (Action::Open(NETWORK_FLYOUT.into()), "Connect"),
             };
@@ -865,12 +866,12 @@ pub fn network_items(
     if networks.location_off {
         items.push(
             row(
-                "Show networks nearby",
+                tr("Show networks nearby"),
                 "Windows needs location access to list nearby Wi-Fi networks",
                 Action::Open(LOCATION_SETTINGS.into()),
             )
             .glyph(glyph::LOCATION)
-            .verb("Open"),
+            .verb(tr("Open")),
         );
     }
     items
@@ -883,17 +884,17 @@ fn device_items(state: Option<bluetooth::State>) -> Vec<ResultItem> {
         None => vec![open("This PC has no Bluetooth adapter", BLUETOOTH_SETTINGS)],
         Some(state) if !state.on => vec![
             row(
-                "Bluetooth is off",
-                "Turn it on to see devices",
+                tr("Bluetooth is off"),
+                tr("Turn it on to see devices"),
                 Action::Command(Command::BluetoothPower(true)),
             )
             .glyph(glyph::BLUETOOTH)
-            .verb("Turn on"),
+            .verb(tr("Turn on")),
         ],
         Some(_) => {
             let devices = bluetooth::devices();
             if devices.is_empty() {
-                return vec![open("No paired devices", BLUETOOTH_SETTINGS)];
+                return vec![open(tr("No paired devices"), BLUETOOTH_SETTINGS)];
             }
             devices
                 .into_iter()
@@ -905,7 +906,7 @@ fn device_items(state: Option<bluetooth::State>) -> Vec<ResultItem> {
                     };
                     row(device.name, subtitle, Action::Open(BLUETOOTH_SETTINGS.into()))
                         .glyph(glyph)
-                        .verb("Settings")
+                        .verb(tr("Settings"))
                 })
                 .collect()
         }
@@ -915,22 +916,22 @@ fn device_items(state: Option<bluetooth::State>) -> Vec<ResultItem> {
 fn output_items(outputs: Result<Vec<audio::Output>, String>) -> Vec<ResultItem> {
     match outputs {
         Err(error) => vec![open(&format!("Cannot list output devices: {error}"), SOUND_SETTINGS)],
-        Ok(outputs) if outputs.is_empty() => vec![open("No output devices", SOUND_SETTINGS)],
+        Ok(outputs) if outputs.is_empty() => vec![open(tr("No output devices"), SOUND_SETTINGS)],
         Ok(outputs) => outputs
             .into_iter()
             .map(|output| {
                 if output.default {
-                    row(output.name, "In use", Action::Open(SOUND_SETTINGS.into()))
+                    row(output.name, tr("In use"), Action::Open(SOUND_SETTINGS.into()))
                         .glyph(glyph::CHECK)
-                        .verb("Settings")
+                        .verb(tr("Settings"))
                 } else {
                     row(
                         output.name,
-                        "Output device",
+                        tr("Output device"),
                         Action::Command(Command::Output(output.id)),
                     )
                     .glyph(glyph::SPEAKER)
-                    .verb("Use")
+                    .verb(tr("Use"))
                 }
             })
             .collect(),
@@ -958,11 +959,11 @@ fn setting_actions(query: &str, state: &State) -> Vec<ResultItem> {
                 items.push(
                     row(
                         if target {
-                            "Turn Night Light on"
+                            tr("Turn Night Light on")
                         } else {
-                            "Turn Night Light off"
+                            tr("Turn Night Light off")
                         },
-                        if on { "Night Light is on" } else { "Night Light is off" },
+                        if on { tr("Night Light is on") } else { tr("Night Light is off") },
                         Action::Command(Command::NightLight(target)),
                     )
                     .glyph(glyph::SETTINGS),
@@ -986,16 +987,16 @@ fn setting_actions(query: &str, state: &State) -> Vec<ResultItem> {
         {
             let light = !modes[0];
             let current = match modes {
-                [true, true] => "Light mode is on",
-                [false, false] => "Dark mode is on",
-                _ => "Mixed app and system modes",
+                [true, true] => tr("Light mode is on"),
+                [false, false] => tr("Dark mode is on"),
+                _ => tr("Mixed app and system modes"),
             };
             items.push(
                 row(
                     if light {
-                        "Switch to light mode"
+                        tr("Switch to light mode")
                     } else {
-                        "Switch to dark mode"
+                        tr("Switch to dark mode")
                     },
                     current,
                     Action::Command(Command::LightMode(light)),
@@ -1025,7 +1026,7 @@ mod tests {
             audio: Some(Some(audio::State {
                 volume: 43,
                 muted: false,
-                device: "Speakers".into(),
+                device: tr("Speakers").into(),
             })),
             media: Some(Some(media::State {
                 title: "Song".into(),
@@ -1052,7 +1053,7 @@ mod tests {
         assert!(search("w", &state).is_empty());
         assert!(titles("note", &state).is_empty());
         assert!(titles("wifi please", &state).is_empty());
-        for query in ["wi", "wifi", "Wi-Fi", "wireless", "wlan"] {
+        for query in ["wi", "wifi", tr("Wi-Fi"), "wireless", "wlan"] {
             assert_eq!(titles(query, &state)[0], "Wi-Fi · On", "{query}");
         }
         let off = &search("wifi off", &state)[0];
@@ -1064,14 +1065,14 @@ mod tests {
     fn radio_rows_toggle_and_drill_into_lists() {
         let on = &search("wifi", &ready())[0];
         assert_eq!(on.subtitle, "Connected to Home · Tab for networks");
-        assert_eq!(on.enter_label(), "Turn off");
+        assert_eq!(on.enter_label(), tr("Turn off"));
         assert_eq!(on.drill, Some(Drill::WifiNetworks));
         assert_eq!(on.highlights, vec![(8, 2)]);
-        assert_eq!(search("wifi", &State::default())[0].subtitle, "Checking…");
+        assert_eq!(search("wifi", &State::default())[0].subtitle, tr("Checking…"));
         let bt = &search("bt", &ready())[0];
-        assert_eq!(bt.title, "Bluetooth · Off");
+        assert_eq!(bt.title, tr("Bluetooth · Off"));
         assert!(matches!(bt.action, Action::Command(Command::BluetoothPower(true))));
-        assert_eq!(titles("blu", &ready())[0], "Bluetooth · Off");
+        assert_eq!(titles("blu", &ready())[0], tr("Bluetooth · Off"));
         assert!(titles("bl", &ready()).is_empty());
     }
 
@@ -1083,7 +1084,7 @@ mod tests {
         assert_eq!(titles("volume 140", &state), ["Set volume to 100%"]);
         assert_eq!(titles("vol up", &state), ["Set volume to 53%"]);
         assert_eq!(titles("vol -50", &state), ["Set volume to 0%"]);
-        assert_eq!(titles("mute", &state), ["Mute"]);
+        assert_eq!(titles("mute", &state), [tr("Mute")]);
         assert!(titles("vol loud", &state).is_empty());
     }
 
@@ -1100,17 +1101,17 @@ mod tests {
             ..ready()
         };
         assert!(titles("next", &idle).is_empty());
-        assert_eq!(titles("music", &idle), ["Nothing is playing"]);
+        assert_eq!(titles("music", &idle), [tr("Nothing is playing")]);
     }
 
     #[test]
     fn finds_power_commands_time_and_settings() {
         let state = ready();
-        assert_eq!(titles("restart", &state), ["Restart"]);
-        assert_eq!(titles("shut", &state), ["Shut down"]);
+        assert_eq!(titles("restart", &state), [tr("Restart")]);
+        assert_eq!(titles("shut", &state), [tr("Shut down")]);
         assert!(titles("re", &state).is_empty());
-        assert_eq!(titles("quit", &state), ["Quit Wisp"]);
-        assert_eq!(titles("exit wi", &state), ["Quit Wisp"]);
+        assert_eq!(titles("quit", &state), [tr("Quit Wisp")]);
+        assert_eq!(titles("exit wi", &state), [tr("Quit Wisp")]);
         let settings = format!("{} Settings", crate::channel::NAME);
         for query in [
             "wisp",
@@ -1125,7 +1126,7 @@ mod tests {
         }
         assert!(!titles("se", &state).contains(&settings));
         assert!(!titles("wifi", &state).contains(&settings));
-        assert_eq!(search("lock", &state)[0].subtitle, "Locks the PC");
+        assert_eq!(search("lock", &state)[0].subtitle, tr("Locks the PC"));
         assert_eq!(
             search("restart", &state)[0].subtitle,
             "Restarts the PC · Press Enter twice"
@@ -1134,10 +1135,10 @@ mod tests {
         assert_eq!(search("time tokyo", &state)[0].glyph, Some(glyph::CLOCK));
         assert!(search("time tokyo", &state)[0].subtitle.starts_with("Tokyo · "));
         assert!(search("time vienna", &state)[0].subtitle.starts_with("Vienna · "));
-        assert_eq!(titles("display", &state), ["Display"]);
+        assert_eq!(titles("display", &state), [tr("Display")]);
         // The Bluetooth command already links to its settings page, so the
         // matching Settings page is not listed again.
-        assert_eq!(titles("bluetooth", &state), ["Bluetooth · Off", "Bluetooth settings"]);
+        assert_eq!(titles("bluetooth", &state), [tr("Bluetooth · Off"), tr("Bluetooth settings")]);
     }
 
     #[test]
@@ -1145,7 +1146,7 @@ mod tests {
         for query in ["hib", "hiber", "hibernate", "hibernation"] {
             let items = power_items_with_capability(query, true);
             assert_eq!(items.len(), 1, "{query}");
-            assert_eq!(items[0].title, "Hibernate");
+            assert_eq!(items[0].title, tr("Hibernate"));
             assert_eq!(items[0].subtitle, "Saves your session and turns off the PC");
             assert!(matches!(
                 items[0].action,
@@ -1156,7 +1157,7 @@ mod tests {
         }
         assert!(power_items_with_capability("hi", true).is_empty());
         assert!(power_items_with_capability("hibernate please", true).is_empty());
-        assert_eq!(power_items_with_capability("sleep", false)[0].title, "Sleep");
+        assert_eq!(power_items_with_capability("sleep", false)[0].title, tr("Sleep"));
         assert!(!Power::Hibernate.needs_confirmation());
         assert!(Power::ShutDown.needs_confirmation());
         assert!(Power::Restart.needs_confirmation());
@@ -1200,10 +1201,10 @@ mod tests {
         assert_eq!(items[0].subtitle, "Connected · 80% signal");
         assert_eq!(items[1].subtitle, "Saved");
         assert!(matches!(&items[1].action, Action::Command(Command::WifiConnect(p)) if p == "Office"));
-        assert_eq!(items.last().unwrap().title, "Show networks nearby");
+        assert_eq!(items.last().unwrap().title, tr("Show networks nearby"));
         assert_eq!(
             network_items(state.wifi.as_ref(), None)[0].title,
-            "Looking for networks…"
+            tr("Looking for networks…")
         );
     }
 }
@@ -1230,9 +1231,9 @@ mod system_action_tests {
             assert_eq!(
                 rows[0].title,
                 if on {
-                    "Turn Night Light off"
+                    tr("Turn Night Light off")
                 } else {
-                    "Turn Night Light on"
+                    tr("Turn Night Light on")
                 }
             );
             assert!(matches!(rows[0].action, Action::Command(Command::NightLight(target)) if target != on));
@@ -1298,9 +1299,9 @@ mod system_action_tests {
     #[test]
     fn color_mode_is_one_toggle_under_every_name() {
         for (modes, light, subtitle) in [
-            ([true, true], false, "Light mode is on"),
-            ([false, false], true, "Dark mode is on"),
-            ([true, false], false, "Mixed app and system modes"),
+            ([true, true], false, tr("Light mode is on")),
+            ([false, false], true, tr("Dark mode is on")),
+            ([true, false], false, tr("Mixed app and system modes")),
         ] {
             let state = State {
                 color_modes: Some(modes),

@@ -5,6 +5,7 @@
 //! need location access. Without it, Wisp shows only the current network,
 //! using the Network List Manager, and offers Location settings.
 
+use crate::i18n::tr;
 use windows::{
     Devices::Radios::RadioKind,
     Win32::{
@@ -161,7 +162,7 @@ pub fn state() -> Option<State> {
 }
 
 pub fn set_power(on: bool) -> Result<(), String> {
-    radio::set(RadioKind::WiFi, "Wi-Fi", on)
+    radio::set(RadioKind::WiFi, tr("Wi-Fi"), on)
 }
 
 /// Scans nearby networks, or shows only the current network without Location access.
@@ -504,7 +505,7 @@ pub fn join(network: &Network, password: Option<&str>) -> Result<(), String> {
         let mut list = std::ptr::null_mut();
         win32(unsafe { WlanGetAvailableNetworkList(client.0, &interface, 0, None, &mut list) })?;
         if list.is_null() {
-            return Err("No networks available.".into());
+            return Err(tr("No networks available.").into());
         }
         let auth = unsafe {
             let items = std::slice::from_raw_parts((*list).Network.as_ptr(), (*list).dwNumberOfItems as usize);

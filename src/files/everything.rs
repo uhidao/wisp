@@ -399,6 +399,7 @@ fn is_local(row: &Row) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::i18n::tr;
     use super::*;
 
     #[test]
@@ -450,7 +451,7 @@ mod tests {
     fn parses_a_list2_reply() {
         let bytes = list2(&[
             (0, "bug-reporting.txt", r"D:\notes\bug-reporting.txt"),
-            (ITEM_FOLDER, "Berichte", r"E:\Berichte"),
+            (ITEM_FOLDER, tr("Berichte"), r"E:\Berichte"),
         ]);
         let rows = parse(&bytes, 100).unwrap();
         let rows: Vec<(&str, &str, bool)> = rows
@@ -461,7 +462,7 @@ mod tests {
             rows,
             [
                 ("bug-reporting.txt", r"D:\notes\bug-reporting.txt", false),
-                ("Berichte", r"E:\Berichte", true),
+                (tr("Berichte"), r"E:\Berichte", true),
             ]
         );
     }
@@ -487,7 +488,7 @@ mod tests {
             is_folder: false,
         };
         assert!(is_local(&row("a.txt", r"C:\a.txt")));
-        assert!(is_local(&row("Berichte", r"E:\Docs\Berichte")));
+        assert!(is_local(&row(tr("Berichte"), r"E:\Docs\Berichte")));
         assert!(!is_local(&row("a.txt", r"\\server\share\a.txt")));
         assert!(!is_local(&row("a.txt", r"C:\b.txt")));
         assert!(!is_local(&row("a.txt", r"C:\xa.txt")));

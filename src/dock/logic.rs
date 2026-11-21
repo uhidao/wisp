@@ -75,6 +75,7 @@ pub fn at_held_edge(
 
 #[cfg(test)]
 mod edge_tests {
+    use crate::i18n::tr;
     use super::{at_held_edge, bottom_edge_hold, glided};
     use std::time::Duration;
     use windows::Win32::Foundation::{POINT, RECT};
@@ -1664,11 +1665,11 @@ mod tests {
                 aliases: Vec::new(),
                 id: "Microsoft.WindowsTerminal_8wekyb3d8bbwe!App".into(),
                 path: None,
-                name: "Terminal".into(),
+                name: tr("Terminal").into(),
             },
         ];
         // Terminal's windows report no AppUserModelID; its folder still finds it.
-        assert_eq!(match_app(&apps, terminal, None).unwrap().name, "Terminal");
+        assert_eq!(match_app(&apps, terminal, None).unwrap().name, tr("Terminal"));
         // A window with an ID of its own is never matched by folder.
         assert!(match_app(&apps, terminal, Some("Some.Other!App")).is_none());
     }
@@ -1716,13 +1717,13 @@ mod tests {
             aliases: Vec::new(),
             id: r"C:\Windows\notepad.exe".into(),
             path: Some(r"C:\Windows\notepad.exe".into()),
-            name: "Notepad".into(),
+            name: tr("Notepad").into(),
         };
         let apps = vec![AppEntry {
             aliases: Vec::new(),
             id: "Microsoft.WindowsTerminal_8wekyb3d8bbwe!App".into(),
             path: None,
-            name: "Terminal".into(),
+            name: tr("Terminal").into(),
         }];
         let old = AppEntry {
             aliases: Vec::new(),
@@ -1734,7 +1735,7 @@ mod tests {
         assert!(migrate_packaged_pins(&mut pins, &apps));
         assert_eq!(pins.len(), 2);
         assert_eq!(pins[0].id, "Microsoft.WindowsTerminal_8wekyb3d8bbwe!App");
-        assert_eq!((pins[0].path.as_deref(), pins[0].name.as_str()), (None, "Terminal"));
+        assert_eq!((pins[0].path.as_deref(), pins[0].name.as_str()), (None, tr("Terminal")));
         assert_eq!(pins[1].id, notepad.id);
         // Nothing left to move, and an app missing from the index keeps its pin.
         assert!(!migrate_packaged_pins(&mut pins, &apps));

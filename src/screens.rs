@@ -83,7 +83,7 @@ pub fn main() -> Option<RECT> {
         .then_some(info.rcMonitor)
 }
 
-/// Names each screen: its model, numbered when two share one, or "Screen N"
+/// Names each screen: its model, numbered when two share one, or tr("Screen N")
 /// when Windows doesn't know the model.
 fn label(models: &[String]) -> Vec<String> {
     models

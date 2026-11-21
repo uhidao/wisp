@@ -1,4 +1,5 @@
 //! Independent, nonactivating app dock on the message-loop thread.
+use crate::i18n::tr;
 
 #[path = "dock/artwork.rs"]
 mod artwork;
@@ -324,8 +325,10 @@ fn chevron_track(hwnd: HWND, owner: HWND) {
         let Ok(menu) = CreatePopupMenu() else {
             return;
         };
-        let _ = AppendMenuW(menu, MF_STRING, 1, w!("Show taskbar"));
-        let _ = AppendMenuW(menu, MF_STRING, 2, w!("Taskbar settings"));
+        let __h = HSTRING::from(tr("Show taskbar"));
+        let _ = AppendMenuW(menu, MF_STRING, 1, PCWSTR(__h.as_ptr()));
+        let __h = HSTRING::from(tr("Taskbar settings"));
+        let _ = AppendMenuW(menu, MF_STRING, 2, PCWSTR(__h.as_ptr()));
         let mut point = POINT::default();
         let _ = GetCursorPos(&mut point);
         let _ = SetForegroundWindow(hwnd);
@@ -879,11 +882,12 @@ impl Dock {
             }
             owner
         } else {
+            let __dock_title = HSTRING::from(tr("Wisp Dock"));
             unsafe {
                 CreateWindowExW(
                     WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE,
                     class.lpszClassName,
-                    w!("Wisp Dock"),
+                    PCWSTR(__dock_title.as_ptr()),
                     WS_POPUP | WS_CAPTION,
                     0,
                     0,
@@ -920,9 +924,10 @@ impl Dock {
         if unsafe { RegisterClassExW(&popup) } == 0 && unsafe { GetLastError() } != ERROR_CLASS_ALREADY_EXISTS {
             return Err(Error::from_thread());
         }
+        let __area_title = HSTRING::from(tr("Notification area"));
         for (kind, style, title) in [
             // The flyout takes focus, for Esc and closing on a click elsewhere.
-            (Popup::Flyout, WS_EX_TOOLWINDOW | WS_EX_TOPMOST, w!("Notification area")),
+            (Popup::Flyout, WS_EX_TOOLWINDOW | WS_EX_TOPMOST, PCWSTR(__area_title.as_ptr())),
             (
                 Popup::Tip,
                 WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT,
@@ -2943,7 +2948,7 @@ impl State {
                 self.status.tooltip_for(&self.radios, &self.status_items(part)),
                 self.part_rect(part),
             ),
-            Some(tray::Tip::Chevron) => ("Show hidden icons".to_string(), self.part_rect(logic::Part::Chevron)),
+            Some(tray::Tip::Chevron) => (tr("Show hidden icons").to_string(), self.part_rect(logic::Part::Chevron)),
             Some(tray::Tip::Inline(i)) => (
                 self.inline
                     .get(i)
@@ -3304,32 +3309,29 @@ impl State {
                     let _ = DestroyMenu(menu);
                     return None;
                 }
-                let pin = if pinned {
-                    w!("Unpin from dock")
-                } else {
-                    w!("Pin to dock")
-                };
-                let _ = AppendMenuW(menu, MF_STRING, MENU_PIN, pin);
+                let pin_text = HSTRING::from(if pinned { tr("Unpin from dock") } else { tr("Pin to dock") });
+                let _ = AppendMenuW(menu, MF_STRING, MENU_PIN, PCWSTR(pin_text.as_ptr()));
                 if !windows.is_empty() {
-                    let close = if windows.len() > 1 {
-                        w!("Close all windows")
-                    } else {
-                        w!("Close window")
-                    };
-                    let _ = AppendMenuW(menu, MF_STRING, MENU_CLOSE, close);
+                    let close_text = HSTRING::from(if windows.len() > 1 { tr("Close all windows") } else { tr("Close window") });
+                    let _ = AppendMenuW(menu, MF_STRING, MENU_CLOSE, PCWSTR(close_text.as_ptr()));
                 }
                 if ending.is_some() {
-                    let _ = AppendMenuW(menu, MF_STRING, MENU_END_TASK, w!("End task"));
+                    let __h = HSTRING::from(tr("End task"));
+                    let _ = AppendMenuW(menu, MF_STRING, MENU_END_TASK, PCWSTR(__h.as_ptr()));
                 }
-                let _ = AppendMenuW(submenu, MF_STRING, MENU_NEW_WINDOW, w!("New window"));
+                let __h = HSTRING::from(tr("New window"));
+                let _ = AppendMenuW(submenu, MF_STRING, MENU_NEW_WINDOW, PCWSTR(__h.as_ptr()));
                 if elevatable {
-                    let _ = AppendMenuW(submenu, MF_STRING, MENU_ADMIN, w!("Run as administrator"));
+                    let __h = HSTRING::from(tr("Run as administrator"));
+                    let _ = AppendMenuW(submenu, MF_STRING, MENU_ADMIN, PCWSTR(__h.as_ptr()));
                 }
                 if location.is_some() {
-                    let _ = AppendMenuW(submenu, MF_STRING, MENU_LOCATION, w!("Open file location"));
+                    let __h = HSTRING::from(tr("Open file location"));
+                    let _ = AppendMenuW(submenu, MF_STRING, MENU_LOCATION, PCWSTR(__h.as_ptr()));
                 }
                 if location.is_some() {
-                    let _ = AppendMenuW(submenu, MF_STRING, MENU_PROPERTIES, w!("Properties"));
+                    let __h = HSTRING::from(tr("Properties"));
+                    let _ = AppendMenuW(submenu, MF_STRING, MENU_PROPERTIES, PCWSTR(__h.as_ptr()));
                 }
                 let new_window = self.launch(&app, false);
                 let admin = self.launch(&app, true);

@@ -1,6 +1,7 @@
 //! Draws with Direct2D and DirectWrite in device-independent pixels (DIPs).
 //! The render target's DPI controls scaling.
 
+use crate::i18n::tr;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -791,7 +792,7 @@ unsafe fn draw_surface(
             brush.SetColor(&p.subtext);
             draw_text(
                 rt,
-                "Nothing matches",
+                tr("Nothing matches"),
                 &fm.small,
                 rect(ox, oy, ox + surface_width(), oy + 48.0),
                 brush,

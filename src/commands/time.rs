@@ -3,6 +3,7 @@
 //! Cities come from both the localized Windows time zone list and a built-in
 //! English list. A few large cities that Windows omits are added too.
 
+use crate::i18n::tr;
 mod english_cities;
 
 use std::sync::OnceLock;
@@ -65,7 +66,7 @@ impl Clock {
         format!("{:02}:{:02}", self.hour, self.minute)
     }
 
-    /// "Thursday 29 Oct".
+    /// tr("Thursday 29 Oct").
     pub fn short_date(&self) -> String {
         format!(
             "{} {} {}",
@@ -75,7 +76,7 @@ impl Clock {
         )
     }
 
-    /// "Thursday, 29 October 2026".
+    /// tr("Thursday, 29 October 2026").
     pub fn long_date(&self) -> String {
         format!(
             "{}, {} {} {}",
@@ -86,10 +87,10 @@ impl Clock {
         )
     }
 
-    /// "3 h 30 min ahead of you", "1 h behind you", "Same time as you".
+    /// "3 h 30 min ahead of you", "1 h behind you", tr("Same time as you").
     pub fn difference(&self) -> String {
         if self.ahead == 0 {
-            return "Same time as you".into();
+            return tr("Same time as you").into();
         }
         let minutes = self.ahead.unsigned_abs();
         let (h, m) = (minutes / 60, minutes % 60);
@@ -202,11 +203,12 @@ fn display_name(key: &str) -> Option<String> {
     ));
     let mut buffer = [0u16; 256];
     let mut size = (buffer.len() * 2) as u32;
+    let __value = HSTRING::from(tr("Display"));
     unsafe {
         RegGetValueW(
             HKEY_LOCAL_MACHINE,
             PCWSTR(path.as_ptr()),
-            w!("Display"),
+            PCWSTR(__value.as_ptr()),
             RRF_RT_REG_SZ,
             None,
             Some(buffer.as_mut_ptr().cast()),
@@ -257,7 +259,7 @@ mod tests {
         assert_eq!(tokyo.time(), "02:14");
         let london = clock(at(2026, 10, 28, 17, 14), &local);
         assert_eq!(london.difference(), "5 h 30 min behind you");
-        assert_eq!(clock(local, &local).difference(), "Same time as you");
+        assert_eq!(clock(local, &local).difference(), tr("Same time as you"));
         let year_end = clock(at(2027, 1, 1, 0, 0), &at(2026, 12, 31, 23, 0));
         assert_eq!(year_end.difference(), "1 h ahead of you");
     }
@@ -300,7 +302,7 @@ mod tests {
             ("vienna", "Vienna", -60),
             ("wien", "Wien", -60),
             ("new york", "New York", 300),
-            ("eastern zeit", "Eastern Zeit (USA & Kanada)", 300),
+            ("eastern zeit", tr("Eastern Zeit (USA & Kanada)"), 300),
         ] {
             let found = find_in(&zones, query);
             assert_eq!(found.len(), 1, "{query}");
@@ -320,7 +322,7 @@ mod tests {
             zone_cities("Tokyo Standard Time", "(UTC+09:00) OSAKA, Sapporo, Tokyo, Tokyo"),
             ["OSAKA", "Sapporo", "Tokyo"]
         );
-        assert_eq!(zone_cities("Future Zone", "(UTC+01:00) Local City"), ["Local City"]);
+        assert_eq!(zone_cities("Future Zone", "(UTC+01:00) Local City"), [tr("Local City")]);
         assert_eq!(zone_cities("Tokyo Standard Time", ""), ["Osaka", "Sapporo", "Tokyo"]);
     }
 

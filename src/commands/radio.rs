@@ -14,7 +14,7 @@ pub fn is_on(kind: RadioKind) -> Option<bool> {
     Some(radio.State().is_ok_and(|state| state == RadioState::On))
 }
 
-/// `name` is the radio's name in error messages, such as "Wi-Fi".
+/// `name` is the radio's name in error messages, such as tr("Wi-Fi").
 pub fn set(kind: RadioKind, name: &str, on: bool) -> Result<(), String> {
     set_with_access(kind, name, on, request_access()?)
 }

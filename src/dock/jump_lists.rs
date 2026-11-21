@@ -3,6 +3,7 @@
 //! One background thread reads them, starting when the pointer rests on an
 //! app, so the right-click menu rarely waits. Each app's first read loads its
 //! list from disk (often 20–200 ms); later reads take a millisecond or two.
+use crate::i18n::tr;
 use std::io::Read;
 use std::path::Path;
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -196,7 +197,7 @@ fn collect(key: &Key) -> Vec<Section> {
     } && unsafe { lists.SetAppID(&HSTRING::from(&aumid)) }.is_ok()
     {
         // Like the taskbar, one of the two: they mostly repeat each other.
-        for (title, kind) in [("Recent", ADLT_RECENT), ("Frequent", ADLT_FREQUENT)] {
+        for (title, kind) in [(tr("Recent"), ADLT_RECENT), (tr("Frequent"), ADLT_FREQUENT)] {
             if let Ok(items) = documents(&lists, kind, start)
                 && let Some(section) = section_with_items(title, items)
             {
@@ -206,7 +207,7 @@ fn collect(key: &Key) -> Vec<Section> {
         }
     }
     if let Some(items) = tasks(&aumid, start)
-        && let Some(section) = section_with_items("Tasks", items)
+        && let Some(section) = section_with_items(tr("Tasks"), items)
     {
         sections.push(section);
     }
@@ -517,14 +518,14 @@ mod tests {
     use super::*;
     #[test]
     fn sections_hide_when_empty_and_cap_at_six() {
-        assert!(section_with_items("Tasks", Vec::new()).is_none());
+        assert!(section_with_items(tr("Tasks"), Vec::new()).is_none());
         let items = (0..20)
             .map(|i| Item {
                 title: i.to_string(),
                 action: Action::Shell(Vec::new()),
             })
             .collect();
-        let section = section_with_items("Tasks", items).unwrap();
+        let section = section_with_items(tr("Tasks"), items).unwrap();
         assert_eq!(section.items.len(), 6);
         assert_eq!(section.items[5].title, "5");
     }

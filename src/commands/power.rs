@@ -1,4 +1,5 @@
 //! Lock, sleep, hibernate, restart, shut down, sign out and empty the Recycle Bin.
+use crate::i18n::tr;
 
 use windows::{
     Win32::{
@@ -41,24 +42,24 @@ impl Power {
 
     pub fn title(self) -> &'static str {
         match self {
-            Power::Lock => "Lock",
-            Power::Sleep => "Sleep",
-            Power::Hibernate => "Hibernate",
-            Power::Restart => "Restart",
-            Power::ShutDown => "Shut down",
-            Power::SignOut => "Sign out",
-            Power::EmptyRecycleBin => "Empty Recycle Bin",
+            Power::Lock => tr("Lock"),
+            Power::Sleep => tr("Sleep"),
+            Power::Hibernate => tr("Hibernate"),
+            Power::Restart => tr("Restart"),
+            Power::ShutDown => tr("Shut down"),
+            Power::SignOut => tr("Sign out"),
+            Power::EmptyRecycleBin => tr("Empty Recycle Bin"),
         }
     }
 
     pub fn description(self) -> &'static str {
         match self {
-            Power::Lock => "Locks the PC",
-            Power::Sleep => "Puts the PC to sleep",
+            Power::Lock => tr("Locks the PC"),
+            Power::Sleep => tr("Puts the PC to sleep"),
             Power::Hibernate => "Saves your session and turns off the PC",
-            Power::Restart => "Restarts the PC",
-            Power::ShutDown => "Turns off the PC",
-            Power::SignOut => "Signs you out of Windows",
+            Power::Restart => tr("Restarts the PC"),
+            Power::ShutDown => tr("Turns off the PC"),
+            Power::SignOut => tr("Signs you out of Windows"),
             Power::EmptyRecycleBin => "Deletes the files in the Recycle Bin",
         }
     }
