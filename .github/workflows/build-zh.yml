@@ -1,0 +1,23 @@
+name: Build zh
+
+on:
+  push:
+    branches: [main, zh]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --workspace
+      - name: Upload exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: wisp-zh-build
+          path: |
+            target/release/wisp.exe
+            target/release/wisp-settings.exe
+          if-no-files-found: error
